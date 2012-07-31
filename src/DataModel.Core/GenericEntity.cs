@@ -58,6 +58,19 @@ namespace TechSmith.CloudServices.DataModel.Core
       public T CreateInstanceFromProperties<T>() where T : new()
       {
          var newItem = new T();
+
+         var partitionKeyProperty = newItem.FindPropertyDecoratedWith<PartitionKeyAttribute>();
+         if ( partitionKeyProperty != null )
+         {
+            partitionKeyProperty.SetValue( newItem, PartitionKey, null );
+         }
+
+         var rowKeyProperty = newItem.FindPropertyDecoratedWith<RowKeyAttribute>();
+         if ( rowKeyProperty != null )
+         {
+            rowKeyProperty.SetValue( newItem, RowKey, null );
+         }
+
          foreach ( var property in newItem.GetType().GetProperties() )
          {
             if ( ShouldSerialize( property ) )
@@ -81,6 +94,14 @@ namespace TechSmith.CloudServices.DataModel.Core
          var funcToCall = _typeToConverterFunction[type];
 
          return funcToCall( itemToConvert.Value.ToString() );
+      }
+
+      public static GenericEntity HydrateFrom<T>( T sourceItem ) where T : new()
+      {
+         string partitionKey = sourceItem.ReadPropertyDecoratedWith<PartitionKeyAttribute>();
+         string rowKey = sourceItem.ReadPropertyDecoratedWith<RowKeyAttribute>();
+
+         return HydrateGenericEntityFromItem( sourceItem, partitionKey, rowKey );
       }
 
       public static GenericEntity HydrateGenericEntityFromItem<T>( T sourceItem, string partitionKey, string rowKey ) where T : new()

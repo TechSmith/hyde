@@ -43,10 +43,9 @@ namespace TechSmith.CloudServices.DataModel.Core
 
       public void AddNewItem<T>( string tableName, T itemToAdd, string partitionKey, string rowKey ) where T : new()
       {
-         var genericToAdd = GenericEntity.HydrateGenericEntityFromItem( itemToAdd, partitionKey, rowKey );
          try
          {
-            AddObject( tableName, genericToAdd );
+            AddObject( tableName, GenericEntity.HydrateGenericEntityFromItem( itemToAdd, partitionKey, rowKey ) );
          }
          catch ( InvalidOperationException ex )
          {
