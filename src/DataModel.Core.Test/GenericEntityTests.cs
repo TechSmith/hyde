@@ -15,7 +15,7 @@ namespace TechSmith.CloudServices.DataModel.Core.Tests
                              SecondType = "bar"
                           };
 
-         var genericItemToTest = GenericEntity.HydrateGenericEntityFromItem( itemToSave, "pk", "rk" );
+         var genericItemToTest = GenericEntity.HydrateFrom( itemToSave, "pk", "rk" );
 
 
          var wereCool = true;
@@ -68,7 +68,7 @@ namespace TechSmith.CloudServices.DataModel.Core.Tests
                              NotSerializedString = "bar"
                           };
 
-         var genericItemToTest = GenericEntity.HydrateGenericEntityFromItem( itemToSave, "pk", "rk" );
+         var genericItemToTest = GenericEntity.HydrateFrom( itemToSave, "pk", "rk" );
 
 
          var wereCool = true;

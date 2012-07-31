@@ -45,7 +45,7 @@ namespace TechSmith.CloudServices.DataModel.Core
       {
          try
          {
-            AddObject( tableName, GenericEntity.HydrateGenericEntityFromItem( itemToAdd, partitionKey, rowKey ) );
+            AddObject( tableName, GenericEntity.HydrateFrom( itemToAdd, partitionKey, rowKey ) );
          }
          catch ( InvalidOperationException ex )
          {
@@ -131,7 +131,7 @@ namespace TechSmith.CloudServices.DataModel.Core
          }
          else
          {
-            var genericToUpsert = GenericEntity.HydrateGenericEntityFromItem( itemToUpsert, partitionKey, rowKey );
+            var genericToUpsert = GenericEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
             AttachTo( tableName, genericToUpsert );
             UpdateObject( genericToUpsert );
          }
@@ -141,7 +141,7 @@ namespace TechSmith.CloudServices.DataModel.Core
       {
          try
          {
-            var genericToUpsert = GenericEntity.HydrateGenericEntityFromItem( itemToUpsert, partitionKey, rowKey );
+            var genericToUpsert = GenericEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
             var genericInStorage = GetItemAsGenericEntity<T>( tableName, partitionKey, rowKey );
             if ( !genericToUpsert.AreTheseEqual( genericInStorage ) )
             {
@@ -200,7 +200,7 @@ namespace TechSmith.CloudServices.DataModel.Core
 
       public void Update<T>( string tableName, T updatedItem, string partitionKey, string rowKey ) where T : new()
       {
-         var genericToUpdate = GenericEntity.HydrateGenericEntityFromItem( updatedItem, partitionKey, rowKey );
+         var genericToUpdate = GenericEntity.HydrateFrom( updatedItem, partitionKey, rowKey );
 
          const string eTagThatSpecifiesWeShouldNotAddIfDoesNotExist = "*";
          AttachTo( tableName, genericToUpdate, eTagThatSpecifiesWeShouldNotAddIfDoesNotExist );
