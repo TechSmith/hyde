@@ -15,21 +15,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataModel.Core.IntegrationTest", "Table.DataModel.CoreIntegrationTests\DataModel.Core.IntegrationTest.csproj", "{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}"
 EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 4
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://tfs-app:8080/tfs/tscprojects
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = TechSmith.CloudServices.Table.DataModel\\DataModel.Core.csproj
-		SccProjectName1 = TechSmith.CloudServices.Table.DataModel
-		SccLocalPath1 = TechSmith.CloudServices.Table.DataModel
-		SccProjectUniqueName2 = Table.DataModel.CoreIntegrationTests\\DataModel.Core.IntegrationTest.csproj
-		SccProjectName2 = Table.DataModel.CoreIntegrationTests
-		SccLocalPath2 = Table.DataModel.CoreIntegrationTests
-		SccProjectUniqueName3 = AlternativeDataModel\\DataModel.Core.Test.csproj
-		SccProjectName3 = AlternativeDataModel
-		SccLocalPath3 = AlternativeDataModel
-	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = DataStorage.vsmdi
 	EndGlobalSection

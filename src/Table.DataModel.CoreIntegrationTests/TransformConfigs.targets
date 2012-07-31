@@ -1,0 +1,23 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <UsingTask TaskName="TransformXml"
+         AssemblyFile="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v10.0\Web\Microsoft.Web.Publishing.Tasks.dll"/>
+   <PropertyGroup>
+      <ConfigDirectory>$(MSBuildProjectDirectory)\Configs</ConfigDirectory>
+      <ConfigDestinationDirectory>$(MSBuildProjectDirectory)</ConfigDestinationDirectory>
+      <TargetProfile>local</TargetProfile>
+      <ConfigFileType Condition=" '$(ConfigFileType)' == '' ">App</ConfigFileType>
+      <ConfigFileExtension Condition=" '$(ConfigFileExtension)' == '' ">config</ConfigFileExtension>
+   </PropertyGroup>
+   <PropertyGroup>
+      <BuildDependsOn>
+         TransformConfigs;
+         $(BuildDependsOn)
+      </BuildDependsOn>
+   </PropertyGroup>
+   <Target Name="TransformConfigs">
+      <Exec Command="attrib -r $(ConfigDestinationDirectory)\$(ConfigFileType).$(ConfigFileExtension)"/> 
+      <TransformXml Source="$(ConfigDirectory)\$(ConfigFileType).$(ConfigFileExtension)"
+                    Transform="$(ConfigDirectory)\$(ConfigFileType).$(TargetProfile).$(ConfigFileExtension)"
+                    Destination="$(ConfigDestinationDirectory)\$(ConfigFileType).$(ConfigFileExtension)"/>
+   </Target>
+</Project>
