@@ -101,10 +101,10 @@ namespace TechSmith.CloudServices.DataModel.Core
          string partitionKey = sourceItem.ReadPropertyDecoratedWith<PartitionKeyAttribute>();
          string rowKey = sourceItem.ReadPropertyDecoratedWith<RowKeyAttribute>();
 
-         return HydrateGenericEntityFromItem( sourceItem, partitionKey, rowKey );
+         return HydrateFrom( sourceItem, partitionKey, rowKey );
       }
 
-      public static GenericEntity HydrateGenericEntityFromItem<T>( T sourceItem, string partitionKey, string rowKey ) where T : new()
+      public static GenericEntity HydrateFrom<T>( T sourceItem, string partitionKey, string rowKey ) where T : new()
       {
          var genericEntity = new GenericEntity();
          foreach ( var property in sourceItem.GetType().GetProperties() )
