@@ -98,7 +98,7 @@
     <Content Include="readme.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TechSmith.CloudServices.Table.DataModel\DataModel.Core.csproj">
+    <ProjectReference Include="..\DataModel.Core\DataModel.Core.csproj">
       <Project>{0B041603-6219-44C7-B9EF-3BBCFF33487E}</Project>
       <Name>DataModel.Core</Name>
     </ProjectReference>

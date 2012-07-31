@@ -10,7 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		TraceAndTestImpact.testsettings = TraceAndTestImpact.testsettings
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataModel.Core", "TechSmith.CloudServices.Table.DataModel\DataModel.Core.csproj", "{0B041603-6219-44C7-B9EF-3BBCFF33487E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataModel.Core", "DataModel.Core\DataModel.Core.csproj", "{0B041603-6219-44C7-B9EF-3BBCFF33487E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataModel.Core.IntegrationTest", "DataModel.Core.IntegrationTest\DataModel.Core.IntegrationTest.csproj", "{524AFB8F-B6E1-4CAF-91DD-97F1736052F4}"
 EndProject
