@@ -10,6 +10,11 @@ namespace TechSmith.CloudServices.DataModel.Core
    {
       public static ConcurrentDictionary<string, MemoryTable> _memoryTables = new ConcurrentDictionary<string, MemoryTable>();
 
+      // We store partition/row keys using the following dictionary keys. The slashes
+      // prevent collisions with properties that might happen to be named "PartitionKey" or "RowKey".
+      private const string _partitionKeyName = "/PartitionKey/";
+      private const string _rowKeyName = "/RowKey/";
+
       private readonly Guid _instanceId = Guid.NewGuid();
 
       public static void ClearTables()
@@ -45,10 +50,21 @@ namespace TechSmith.CloudServices.DataModel.Core
          table.Add( partitionKey, rowKey, _instanceId, dataToStore );
       }
 
-
       private static Dictionary<string, object> SerializeItemToData<T>( T itemToAdd ) where T : new()
       {
          var dataToStore = new Dictionary<string, object>();
+
+         var pkProperty = itemToAdd.FindPropertyDecoratedWith<PartitionKeyAttribute>();
+         if ( pkProperty != null )
+         {
+            dataToStore.Add( _partitionKeyName, itemToAdd.ReadPropertyDecoratedWith<PartitionKeyAttribute>() );
+         }
+
+         var rkProperty = itemToAdd.FindPropertyDecoratedWith<RowKeyAttribute>();
+         if ( rkProperty != null )
+         {
+            dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute>() );
+         }
 
          foreach ( var propertyToStore in itemToAdd.GetType().GetProperties() )
          {
@@ -77,16 +93,25 @@ namespace TechSmith.CloudServices.DataModel.Core
          return HydrateItemFromData<T>( tableEntry.EntryProperties( _instanceId ) );
       }
 
-      public T HydrateItemFromData<T>( Dictionary<string, object> dataForItem ) where T : new()
+      private T HydrateItemFromData<T>( Dictionary<string, object> dataForItem ) where T : new()
       {
          var result = new T();
          var typeToHydrate = result.GetType();
 
-         for ( int i = 0; i < dataForItem.Keys.Count; i++ )
+         foreach ( var key in dataForItem.Keys )
          {
-            typeToHydrate
-               .GetProperty( dataForItem.Keys.ElementAt( i ) )
-               .SetValue( result, dataForItem.Values.ElementAt( i ), null );
+            switch ( key )
+            {
+               case _partitionKeyName:
+                  result.WritePropertyDecoratedWith<PartitionKeyAttribute>( (string)dataForItem[key] );
+                  break;
+               case _rowKeyName:
+                  result.WritePropertyDecoratedWith<RowKeyAttribute>( (string)dataForItem[key] );
+                  break;
+               default:
+                  typeToHydrate.GetProperty( key ).SetValue( result, dataForItem[key], null );
+                  break;
+            }
          }
 
          // TODO: Play with IgnoreMissingProperties == false here... In other words, get mad if properties are missing.

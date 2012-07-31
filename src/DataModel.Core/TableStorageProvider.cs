@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -10,6 +11,25 @@ namespace TechSmith.CloudServices.DataModel.Core
       private readonly List<ITableContext> _contextsToSave = new List<ITableContext>();
 
       protected abstract ITableContext GetContext();
+
+      /// <summary>
+      /// Add instance to the given table
+      /// </summary>
+      /// <typeparam name="T">type of the instance to store</typeparam>
+      /// <param name="tableName">name of the table</param>
+      /// <param name="instance">instance to store</param>
+      /// <remarks>
+      /// This method assumes that T has string properties decorated by the
+      /// PartitionKeyAttribute and RowKeyAttribute, which the framework uses to determine
+      /// the partition and row keys for instance.
+      /// </remarks>
+      /// <exception cref="ArgumentException">if T does not have properties decorated with PartitionKey and RowKey</exception>
+      public void Add<T>( string tableName, T instance ) where T : new()
+      {
+         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute>();
+         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute>();
+         Add( tableName, instance, partitionKey, rowKey );
+      }
 
       public void Add<T>( string tableName, T instance, string partitionKey, string rowKey ) where T : new()
       {

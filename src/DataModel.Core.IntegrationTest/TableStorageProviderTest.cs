@@ -778,6 +778,21 @@ namespace TechSmith.CloudServices.DataModel.CoreIntegrationTests
          Assert.AreEqual( 1100, result.Count() );
       }
 
+      [TestCategory( "Integration"), TestMethod]
+      public void Add_ItemHasPartitionAndRowKeyProperties_PartitionAndRowKeyAreCorrectlySaved()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+                                                {
+                                                   Id = "foo", Name = "bar", Age = 42
+                                                } );
+         _tableStorageProvider.Save();
+
+         var item = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+
+         Assert.AreEqual( "foo", item.Id, "partition key not set" );
+         Assert.AreEqual( "bar", item.Name, "row key not set" );
+      }
+
       [TestCategory( "Integration" ), TestMethod]
       public void Upsert_ItemExistsAndIsThenUpdated_ItemIsProperlyUpdated()
       {
