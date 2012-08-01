@@ -85,6 +85,13 @@ namespace TechSmith.CloudServices.DataModel.Core
          }
       }
 
+      public void Upsert<T>( string tableName, T instance ) where T : new()
+      {
+         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute>();
+         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute>();
+         Upsert( tableName, instance, partitionKey, rowKey );
+      }
+
       public void Upsert<T>( string tableName, T instance, string partitionKey, string rowKey ) where T : new()
       {
          var context = GetContext();

@@ -817,6 +817,21 @@ namespace TechSmith.CloudServices.DataModel.CoreIntegrationTests
 
          Assert.AreEqual( itemToUpsert.FirstType, itemInTable.FirstType );
       }
+      
+      [TestCategory( "Integration" ), TestMethod]
+      public void Upsert_ItemExistsAndHasPartitionAndRowKeys_ItemIsUpdated()
+      {
+         var item = new DecoratedItem { Id = "foo2", Name = "bar2", Age = 42 };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var upsertedItem = new DecoratedItem { Id = "foo2", Name = "bar2", Age = 34 };
+         _tableStorageProvider.Upsert( _tableName, upsertedItem );
+         _tableStorageProvider.Save();
+
+         upsertedItem = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo2", "bar2" );
+         Assert.AreEqual( 34, upsertedItem.Age );
+      }
 
       [TestCategory( "Integration" ), TestMethod]
       public void Update_ItemExistsAndUpdateIsValid_ShouldPerformTheUpdate()
