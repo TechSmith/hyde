@@ -5,7 +5,7 @@ This library can be used to access Windows Azure Table Storage in a generic and 
 
 License: BSD 3-Clause, see http://www.opensource.org/licenses/BSD-3-Clause
 
-##Submission guidelines
+### Submission guidelines
 Follow these guidelines, in no particular order, to improve your chances of having a pull request merged in.
 
  * Add an issue for what you plan to add/improve/fix in the project to start a discussion prior to submitting the code.
