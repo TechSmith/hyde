@@ -66,6 +66,7 @@
     <Compile Include="AzureTableStorageProvider.cs" />
     <Compile Include="DontSerializeAttribute.cs" />
     <Compile Include="EntityAlreadyExistsException.cs" />
+    <Compile Include="InvalidEntityException.cs" />
     <Compile Include="EntityPropertyInfo.cs" />
     <Compile Include="AzureTableContext.cs" />
     <Compile Include="ConnectionStringCloudStorageAccount.cs" />

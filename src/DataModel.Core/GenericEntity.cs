@@ -9,6 +9,12 @@ namespace TechSmith.CloudServices.DataModel.Core
    // Modified from Jai Haridas: http://social.msdn.microsoft.com/Forums/en-US/windowsazure/thread/481afa1b-03a9-42d9-ae79-9d5dc33b9297/
    internal class GenericEntity : Microsoft.WindowsAzure.StorageClient.TableServiceEntity
    {
+      private static readonly HashSet<string> InvalidPropertyNames = new HashSet<string>
+                                                                     {
+                                                                        "PartitionKey",
+                                                                        "RowKey",
+                                                                     };
+
       private readonly Dictionary<string, EntityPropertyInfo> _properties = new Dictionary<string, EntityPropertyInfo>();
 
       private static readonly Dictionary<Type, Func<string, object>> _typeToConverterFunction = new Dictionary<Type, Func<string, object>>();
@@ -109,6 +115,10 @@ namespace TechSmith.CloudServices.DataModel.Core
          var genericEntity = new GenericEntity();
          foreach ( var property in sourceItem.GetType().GetProperties() )
          {
+            if ( InvalidPropertyNames.Contains( property.Name ) )
+            {
+               throw new InvalidEntityException( string.Format( "Invalid property name {0}", property.Name ) );
+            }
             if ( ShouldSerialize( property ) )
             {
                var valueOfProperty = property.GetValue( sourceItem, null );

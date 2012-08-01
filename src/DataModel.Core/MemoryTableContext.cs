@@ -10,10 +10,9 @@ namespace TechSmith.CloudServices.DataModel.Core
    {
       public static ConcurrentDictionary<string, MemoryTable> _memoryTables = new ConcurrentDictionary<string, MemoryTable>();
 
-      // We store partition/row keys using the following dictionary keys. The slashes
-      // prevent collisions with properties that might happen to be named "PartitionKey" or "RowKey".
-      private const string _partitionKeyName = "/PartitionKey/";
-      private const string _rowKeyName = "/RowKey/";
+      // We store partition/row keys using the following dictionary keys.
+      private const string _partitionKeyName = "PartitionKey";
+      private const string _rowKeyName = "RowKey";
 
       private readonly Guid _instanceId = Guid.NewGuid();
 
@@ -37,6 +36,9 @@ namespace TechSmith.CloudServices.DataModel.Core
          var keyValidator = new AzureKeyValidator();
          keyValidator.ValidatePartitionKey( partitionKey );
          keyValidator.ValidateRowKey( rowKey );
+
+         // Hydrate the item, which performs validation that would also be done by the AzureTableContext.
+         GenericEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
 
          var table = GetTable( tableName );
 
