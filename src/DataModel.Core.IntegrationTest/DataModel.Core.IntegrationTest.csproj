@@ -97,10 +97,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="AzureTableContextTests.cs" />
+    <Compile Include="TableStorageProviderTest.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TechSmith.CloudServices.Table.DataModel\DataModel.Core.csproj">
+    <ProjectReference Include="..\DataModel.Core\DataModel.Core.csproj">
       <Project>{0B041603-6219-44C7-B9EF-3BBCFF33487E}</Project>
       <Name>Table.DataModel.Core</Name>
     </ProjectReference>
