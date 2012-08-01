@@ -99,6 +99,13 @@ namespace TechSmith.CloudServices.DataModel.Core
          _contextsToSave.Add( context );
       }
 
+      public void Delete<T>( string tableName, T instance )
+      {
+         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute>();
+         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute>();
+         Delete( tableName, partitionKey, rowKey );
+      }
+
       public void Delete( string tableName, string partitionKey, string rowKey )
       {
          var context = GetContext( tableName );
