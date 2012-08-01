@@ -77,14 +77,11 @@ namespace TechSmith.CloudServices.DataModel.Core
             rowKeyProperty.SetValue( newItem, RowKey, null );
          }
 
-         foreach ( var property in newItem.GetType().GetProperties() )
+         foreach ( var property in newItem.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
          {
-            if ( ShouldSerialize( property ) )
-            {
-               var valueToConvert = this[property.Name];
-               var convertedValue = TypeConverter( valueToConvert, property.PropertyType );
-               property.SetValue( newItem, convertedValue, null );
-            }
+            var valueToConvert = this[property.Name];
+            var convertedValue = TypeConverter( valueToConvert, property.PropertyType );
+            property.SetValue( newItem, convertedValue, null );
          }
 
          return newItem;
@@ -113,33 +110,20 @@ namespace TechSmith.CloudServices.DataModel.Core
       public static GenericEntity HydrateFrom<T>( T sourceItem, string partitionKey, string rowKey ) where T : new()
       {
          var genericEntity = new GenericEntity();
-         foreach ( var property in sourceItem.GetType().GetProperties() )
+         foreach ( var property in sourceItem.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
          {
             if ( InvalidPropertyNames.Contains( property.Name ) )
             {
                throw new InvalidEntityException( string.Format( "Invalid property name {0}", property.Name ) );
             }
-            if ( ShouldSerialize( property ) )
-            {
-               var valueOfProperty = property.GetValue( sourceItem, null );
-               genericEntity[property.Name] = new EntityPropertyInfo( valueOfProperty, property.PropertyType, valueOfProperty == null );
-            }
+            var valueOfProperty = property.GetValue( sourceItem, null );
+            genericEntity[property.Name] = new EntityPropertyInfo( valueOfProperty, property.PropertyType, valueOfProperty == null );
          }
 
          genericEntity.PartitionKey = partitionKey;
          genericEntity.RowKey = rowKey;
 
          return genericEntity;
-      }
-
-      private static bool ShouldSerialize( PropertyInfo property )
-      {
-         var shouldSerialize = !property.GetCustomAttributes( false ).OfType<DontSerializeAttribute>().Any();
-
-         shouldSerialize &= ( property.GetSetMethod() != null );
-         shouldSerialize &= ( property.GetGetMethod() != null );
-
-         return shouldSerialize;
       }
 
       public bool AreTheseEqual( GenericEntity rightSide )
