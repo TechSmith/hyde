@@ -56,14 +56,12 @@ namespace TechSmith.CloudServices.DataModel.Core
       {
          var dataToStore = new Dictionary<string, object>();
 
-         var pkProperty = itemToAdd.FindPropertyDecoratedWith<PartitionKeyAttribute>();
-         if ( pkProperty != null )
+         if ( itemToAdd.HasPropertyDecoratedWith<PartitionKeyAttribute>() )
          {
             dataToStore.Add( _partitionKeyName, itemToAdd.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>() );
          }
 
-         var rkProperty = itemToAdd.FindPropertyDecoratedWith<RowKeyAttribute>();
-         if ( rkProperty != null )
+         if ( itemToAdd.HasPropertyDecoratedWith<RowKeyAttribute>() )
          {
             dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute,string>() );
          }

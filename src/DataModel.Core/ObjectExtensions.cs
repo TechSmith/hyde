@@ -38,6 +38,11 @@ namespace TechSmith.CloudServices.DataModel.Core
          return props[0];
       }
 
+      internal static bool HasPropertyDecoratedWith<T>( this object obj ) where T : Attribute
+      {
+         return obj.FindPropertyDecoratedWith<T>() != null;
+      }
+
       /// <summary>
       /// Read the string property decorated with attribute T.
       /// </summary>
