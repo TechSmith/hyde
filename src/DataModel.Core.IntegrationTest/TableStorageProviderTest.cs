@@ -794,6 +794,21 @@ namespace TechSmith.CloudServices.DataModel.CoreIntegrationTests
       }
 
       [TestCategory( "Integration" ), TestMethod]
+      public void Add_ItemHasPartitionAndRowKeyProperties_PropertiesAreNotSavedTwiceInTableStorage()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "48823", Name= "Kovacs", Age = 142, } );
+         _tableStorageProvider.Save();
+
+         var tableServiceContext = _client.GetDataServiceContext();
+         var item = ( from e in tableServiceContext.CreateQuery<DecoratedItemEntity>( _tableName )
+                      where e.PartitionKey == "48823" && e.RowKey == "Kovacs"
+                      select e ).AsTableServiceQuery().First();
+
+         Assert.IsNull( item.Id );
+         Assert.IsNull( item.Name );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
       public void Upsert_ItemExistsAndIsThenUpdated_ItemIsProperlyUpdated()
       {
          var itemToUpsert = new TypeWithStringProperty
