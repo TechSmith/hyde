@@ -27,4 +27,25 @@ namespace TechSmith.CloudServices.DataModel.CoreIntegrationTests
          set;
       }
    }
+
+   class DecoratedItemEntity : Microsoft.WindowsAzure.StorageClient.TableServiceEntity
+   {
+      public string Id
+      {
+         get;
+         set;
+      }
+
+      public string Name
+      {
+         get;
+         set;
+      }
+
+      public int Age
+      {
+         get;
+         set;
+      }
+   }
 }
