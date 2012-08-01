@@ -809,6 +809,19 @@ namespace TechSmith.CloudServices.DataModel.CoreIntegrationTests
       }
 
       [TestCategory( "Integration" ), TestMethod]
+      public void Add_ItemHasPropertiesNamedPartitionKeyAndRowKey_ThrowsInvalidEntityException()
+      {
+         try
+         {
+            _tableStorageProvider.Add( _tableName, new RowPointer { Id = "12367", PartitionKey = "abba", RowKey = "acac" } );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( InvalidEntityException )
+         {
+         }
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
       public void Upsert_ItemExistsAndIsThenUpdated_ItemIsProperlyUpdated()
       {
          var itemToUpsert = new TypeWithStringProperty
