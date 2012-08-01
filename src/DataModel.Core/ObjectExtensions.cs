@@ -13,7 +13,7 @@ namespace TechSmith.CloudServices.DataModel.Core
       /// <typeparam name="T">the attribute that decorates the desired property</typeparam>
       /// <param name="obj">an object</param>
       /// <returns>the property decorated with T, or null</returns>
-      /// <throws>ArgumentException if obj has multiple public properties decorated with T</throws>
+      /// <throws>ArgumentException if obj has multiple public properties decorated with T1, or if the property is not of type T2</throws>
       internal static PropertyInfo FindPropertyDecoratedWith<T>( this object obj ) where T : Attribute
       {
          var attrType = typeof( T );
@@ -41,39 +41,42 @@ namespace TechSmith.CloudServices.DataModel.Core
       /// <summary>
       /// Read the string property decorated with attribute T.
       /// </summary>
-      /// <typeparam name="T">the attribute decorating the desired propery</typeparam>
+      /// <typeparam name="T1">the attribute decorating the desired propery</typeparam>
+      /// <typeparam name="T2">the expected type of the desired property</typeparam>
       /// <param name="obj">an object</param>
       /// <returns>the value of the decorated property</returns>
-      /// <throws>ArgumentException if obj does not have exactly one public property of type string decorated with T</throws>
-      internal static string ReadPropertyDecoratedWith<T>( this object obj ) where T : Attribute
+      /// <throws>ArgumentException if obj does not have exactly one public property of type T2 decorated with T1</throws>
+      internal static T2 ReadPropertyDecoratedWith<T1,T2>( this object obj ) where T1 : Attribute
       {
-         var attrType = typeof( T );
+         var attrType = typeof( T1 );
+         var propType = typeof( T2 );
          var objType = obj.GetType();
-         var prop = obj.FindPropertyDecoratedWith<T>();
+         var prop = obj.FindPropertyDecoratedWith<T1>();
          if ( prop == null )
          {
             throw new ArgumentException( string.Format( "Type {0} has no public property decorated with {1}", objType.FullName, attrType.FullName ) );
          }
-         if ( prop.PropertyType != typeof( string ) )
+         if ( prop.PropertyType != propType )
          {
-            var msg = string.Format( "Property {0}.{1} was not of type string", objType.FullName, prop.Name );
+            var msg = string.Format( "Property {0}.{1} was not of type {2}", objType.FullName, prop.Name, propType.FullName );
             throw new ArgumentException( msg );
          }
-         return (string)prop.GetValue( obj, null );
+         return (T2)prop.GetValue( obj, null );
       }
 
-      internal static void WritePropertyDecoratedWith<T>( this object obj, string value ) where T : Attribute
+      internal static void WritePropertyDecoratedWith<T1,T2>( this object obj, T2 value ) where T1 : Attribute
       {
-         var attrType = typeof( T );
+         var attrType = typeof( T1 );
+         var propType = typeof( T2 );
          var objType = obj.GetType();
-         var prop = obj.FindPropertyDecoratedWith<T>();
+         var prop = obj.FindPropertyDecoratedWith<T1>();
          if ( prop == null )
          {
             throw new ArgumentException( string.Format( "Type {0} has no public property decorated with {1}", objType.FullName, attrType.FullName ) );
          }
-         if ( prop.PropertyType != typeof( string ) )
+         if ( prop.PropertyType != propType )
          {
-            var msg = string.Format( "Property {0}.{1} was not of type string", objType.FullName, prop.Name );
+            var msg = string.Format( "Property {0}.{1} was not of type {2}", objType.FullName, prop.Name, propType.FullName );
             throw new ArgumentException( msg );
          }
          prop.SetValue( obj, value, null );
