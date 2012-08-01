@@ -129,6 +129,18 @@ namespace TechSmith.CloudServices.DataModel.Core.Tests
       }
 
       [TestMethod]
+      public void Add_EntityHasPartitionAndRowKeyAttributes_PartitionAndRowKeysSetCorrectly()
+      {
+         var expected = new DecoratedItem { Id = "foo", Name = "bar" };
+         _tableStorageProvider.Add( _tableName, expected );
+         _tableStorageProvider.Save();
+
+         var actual = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+         Assert.AreEqual( expected.Name, actual.Name );
+         Assert.AreEqual( expected.Id, actual.Id );
+      }
+
+      [TestMethod]
       public void Delete_ItemInTable_ItemDeleted()
       {
          var dataItem = new SimpleDataItem();
