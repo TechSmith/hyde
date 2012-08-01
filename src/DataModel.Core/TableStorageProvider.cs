@@ -105,6 +105,13 @@ namespace TechSmith.CloudServices.DataModel.Core
          context.DeleteCollection( tableName, partitionKey );
       }
 
+      public void Update<T>( string tableName, T item ) where T : new()
+      {
+         var partitionKey = item.ReadPropertyDecoratedWith<PartitionKeyAttribute>();
+         var rowKey = item.ReadPropertyDecoratedWith<RowKeyAttribute>();
+         Update( tableName, item, partitionKey, rowKey );
+      }
+
       public void Update<T>( string tableName, T item, string partitionKey, string rowKey ) where T : new()
       {
          var context = GetContext();

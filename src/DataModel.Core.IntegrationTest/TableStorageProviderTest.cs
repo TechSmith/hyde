@@ -838,6 +838,21 @@ namespace TechSmith.CloudServices.DataModel.CoreIntegrationTests
       }
 
       [TestCategory( "Integration" ), TestMethod]
+      public void Update_ItemExistsAndHasPartitionAndRowKeyProperties_ItemIsUpdated()
+      {
+         var item = new DecoratedItem { Id = "foo", Name = "bar", Age = 42 };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var updatedItem = new DecoratedItem { Id = "foo", Name = "bar", Age = 34 };
+         _tableStorageProvider.Update( _tableName, updatedItem );
+         _tableStorageProvider.Save();
+
+         updatedItem = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+         Assert.AreEqual( 34, updatedItem.Age );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
       [ExpectedException( typeof( EntityDoesNotExistException ) )]
       public void Update_ItemDoesNotExist_ShouldThrowEntityDoesNotExistException()
       {
