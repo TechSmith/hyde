@@ -26,8 +26,8 @@ namespace TechSmith.CloudServices.DataModel.Core
       /// <exception cref="ArgumentException">if T does not have properties decorated with PartitionKey and RowKey</exception>
       public void Add<T>( string tableName, T instance ) where T : new()
       {
-         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute>();
-         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute>();
+         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>();
+         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute,string>();
          Add( tableName, instance, partitionKey, rowKey );
       }
 
@@ -87,8 +87,8 @@ namespace TechSmith.CloudServices.DataModel.Core
 
       public void Upsert<T>( string tableName, T instance ) where T : new()
       {
-         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute>();
-         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute>();
+         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>();
+         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute,string>();
          Upsert( tableName, instance, partitionKey, rowKey );
       }
 
@@ -101,8 +101,8 @@ namespace TechSmith.CloudServices.DataModel.Core
 
       public void Delete<T>( string tableName, T instance )
       {
-         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute>();
-         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute>();
+         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>();
+         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute,string>();
          Delete( tableName, partitionKey, rowKey );
       }
 
@@ -121,8 +121,8 @@ namespace TechSmith.CloudServices.DataModel.Core
 
       public void Update<T>( string tableName, T item ) where T : new()
       {
-         var partitionKey = item.ReadPropertyDecoratedWith<PartitionKeyAttribute>();
-         var rowKey = item.ReadPropertyDecoratedWith<RowKeyAttribute>();
+         var partitionKey = item.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>();
+         var rowKey = item.ReadPropertyDecoratedWith<RowKeyAttribute,string>();
          Update( tableName, item, partitionKey, rowKey );
       }
 

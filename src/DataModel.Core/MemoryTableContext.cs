@@ -59,13 +59,13 @@ namespace TechSmith.CloudServices.DataModel.Core
          var pkProperty = itemToAdd.FindPropertyDecoratedWith<PartitionKeyAttribute>();
          if ( pkProperty != null )
          {
-            dataToStore.Add( _partitionKeyName, itemToAdd.ReadPropertyDecoratedWith<PartitionKeyAttribute>() );
+            dataToStore.Add( _partitionKeyName, itemToAdd.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>() );
          }
 
          var rkProperty = itemToAdd.FindPropertyDecoratedWith<RowKeyAttribute>();
          if ( rkProperty != null )
          {
-            dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute>() );
+            dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute,string>() );
          }
 
          foreach ( var propertyToStore in itemToAdd.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
@@ -97,10 +97,10 @@ namespace TechSmith.CloudServices.DataModel.Core
             switch ( key )
             {
                case _partitionKeyName:
-                  result.WritePropertyDecoratedWith<PartitionKeyAttribute>( (string)dataForItem[key] );
+                  result.WritePropertyDecoratedWith<PartitionKeyAttribute,string>( (string)dataForItem[key] );
                   break;
                case _rowKeyName:
-                  result.WritePropertyDecoratedWith<RowKeyAttribute>( (string)dataForItem[key] );
+                  result.WritePropertyDecoratedWith<RowKeyAttribute,string>( (string)dataForItem[key] );
                   break;
                default:
                   typeToHydrate.GetProperty( key ).SetValue( result, dataForItem[key], null );
