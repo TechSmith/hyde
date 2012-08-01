@@ -10,6 +10,10 @@ namespace TechSmith.CloudServices.DataModel.Core
    {
       public static ConcurrentDictionary<string, MemoryTable> _memoryTables = new ConcurrentDictionary<string, MemoryTable>();
 
+      // We store partition/row keys using the following dictionary keys.
+      private const string _partitionKeyName = "PartitionKey";
+      private const string _rowKeyName = "RowKey";
+
       private readonly Guid _instanceId = Guid.NewGuid();
 
       public static void ClearTables()
@@ -33,6 +37,9 @@ namespace TechSmith.CloudServices.DataModel.Core
          keyValidator.ValidatePartitionKey( partitionKey );
          keyValidator.ValidateRowKey( rowKey );
 
+         // Hydrate the item, which performs validation that would also be done by the AzureTableContext.
+         GenericEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
+
          var table = GetTable( tableName );
 
          if ( table.HasEntity( partitionKey, rowKey ) )
@@ -45,24 +52,25 @@ namespace TechSmith.CloudServices.DataModel.Core
          table.Add( partitionKey, rowKey, _instanceId, dataToStore );
       }
 
-
       private static Dictionary<string, object> SerializeItemToData<T>( T itemToAdd ) where T : new()
       {
          var dataToStore = new Dictionary<string, object>();
 
-         foreach ( var propertyToStore in itemToAdd.GetType().GetProperties() )
+         if ( itemToAdd.HasPropertyDecoratedWith<PartitionKeyAttribute>() )
          {
-            if ( ShouldSerialize( propertyToStore ) )
-            {
-               dataToStore.Add( propertyToStore.Name, propertyToStore.GetValue( itemToAdd, null ) );
-            }
+            dataToStore.Add( _partitionKeyName, itemToAdd.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>() );
+         }
+
+         if ( itemToAdd.HasPropertyDecoratedWith<RowKeyAttribute>() )
+         {
+            dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute,string>() );
+         }
+
+         foreach ( var propertyToStore in itemToAdd.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
+         {
+            dataToStore.Add( propertyToStore.Name, propertyToStore.GetValue( itemToAdd, null ) );
          }
          return dataToStore;
-      }
-
-      private static bool ShouldSerialize( PropertyInfo propertyToStore )
-      {
-         return !propertyToStore.GetCustomAttributes( false ).OfType<DontSerializeAttribute>().Any();
       }
 
       public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
@@ -77,16 +85,25 @@ namespace TechSmith.CloudServices.DataModel.Core
          return HydrateItemFromData<T>( tableEntry.EntryProperties( _instanceId ) );
       }
 
-      public T HydrateItemFromData<T>( Dictionary<string, object> dataForItem ) where T : new()
+      private T HydrateItemFromData<T>( Dictionary<string, object> dataForItem ) where T : new()
       {
          var result = new T();
          var typeToHydrate = result.GetType();
 
-         for ( int i = 0; i < dataForItem.Keys.Count; i++ )
+         foreach ( var key in dataForItem.Keys )
          {
-            typeToHydrate
-               .GetProperty( dataForItem.Keys.ElementAt( i ) )
-               .SetValue( result, dataForItem.Values.ElementAt( i ), null );
+            switch ( key )
+            {
+               case _partitionKeyName:
+                  result.WritePropertyDecoratedWith<PartitionKeyAttribute,string>( (string)dataForItem[key] );
+                  break;
+               case _rowKeyName:
+                  result.WritePropertyDecoratedWith<RowKeyAttribute,string>( (string)dataForItem[key] );
+                  break;
+               default:
+                  typeToHydrate.GetProperty( key ).SetValue( result, dataForItem[key], null );
+                  break;
+            }
          }
 
          // TODO: Play with IgnoreMissingProperties == false here... In other words, get mad if properties are missing.

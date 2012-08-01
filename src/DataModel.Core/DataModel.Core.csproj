@@ -66,6 +66,7 @@
     <Compile Include="AzureTableStorageProvider.cs" />
     <Compile Include="DontSerializeAttribute.cs" />
     <Compile Include="EntityAlreadyExistsException.cs" />
+    <Compile Include="InvalidEntityException.cs" />
     <Compile Include="EntityPropertyInfo.cs" />
     <Compile Include="AzureTableContext.cs" />
     <Compile Include="ConnectionStringCloudStorageAccount.cs" />
@@ -82,7 +83,11 @@
     <Compile Include="MemoryTable.cs" />
     <Compile Include="MemoryTableContext.cs" />
     <Compile Include="MemoryTableEntry.cs" />
+    <Compile Include="ObjectExtensions.cs" />
+    <Compile Include="PartitionKeyAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PropertyInfoExtensions.cs" />
+    <Compile Include="RowKeyAttribute.cs" />
     <Compile Include="TableServiceEntity.cs" />
     <Compile Include="TableStorageProvider.cs" />
   </ItemGroup>

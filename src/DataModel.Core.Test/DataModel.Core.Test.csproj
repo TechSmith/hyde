@@ -84,6 +84,7 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DecoratedItem.cs" />
     <Compile Include="GenericEntityTests.cs" />
     <Compile Include="TableStorageProviderTests.cs" />
     <Compile Include="NullableSimpleType.cs" />

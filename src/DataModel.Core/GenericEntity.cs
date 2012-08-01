@@ -9,6 +9,12 @@ namespace TechSmith.CloudServices.DataModel.Core
    // Modified from Jai Haridas: http://social.msdn.microsoft.com/Forums/en-US/windowsazure/thread/481afa1b-03a9-42d9-ae79-9d5dc33b9297/
    internal class GenericEntity : Microsoft.WindowsAzure.StorageClient.TableServiceEntity
    {
+      private static readonly HashSet<string> InvalidPropertyNames = new HashSet<string>
+                                                                     {
+                                                                        "PartitionKey",
+                                                                        "RowKey",
+                                                                     };
+
       private readonly Dictionary<string, EntityPropertyInfo> _properties = new Dictionary<string, EntityPropertyInfo>();
 
       private static readonly Dictionary<Type, Func<string, object>> _typeToConverterFunction = new Dictionary<Type, Func<string, object>>();
@@ -58,14 +64,24 @@ namespace TechSmith.CloudServices.DataModel.Core
       public T CreateInstanceFromProperties<T>() where T : new()
       {
          var newItem = new T();
-         foreach ( var property in newItem.GetType().GetProperties() )
+
+         var partitionKeyProperty = newItem.FindPropertyDecoratedWith<PartitionKeyAttribute>();
+         if ( partitionKeyProperty != null )
          {
-            if ( ShouldSerialize( property ) )
-            {
-               var valueToConvert = this[property.Name];
-               var convertedValue = TypeConverter( valueToConvert, property.PropertyType );
-               property.SetValue( newItem, convertedValue, null );
-            }
+            partitionKeyProperty.SetValue( newItem, PartitionKey, null );
+         }
+
+         var rowKeyProperty = newItem.FindPropertyDecoratedWith<RowKeyAttribute>();
+         if ( rowKeyProperty != null )
+         {
+            rowKeyProperty.SetValue( newItem, RowKey, null );
+         }
+
+         foreach ( var property in newItem.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
+         {
+            var valueToConvert = this[property.Name];
+            var convertedValue = TypeConverter( valueToConvert, property.PropertyType );
+            property.SetValue( newItem, convertedValue, null );
          }
 
          return newItem;
@@ -83,32 +99,31 @@ namespace TechSmith.CloudServices.DataModel.Core
          return funcToCall( itemToConvert.Value.ToString() );
       }
 
-      public static GenericEntity HydrateGenericEntityFromItem<T>( T sourceItem, string partitionKey, string rowKey ) where T : new()
+      public static GenericEntity HydrateFrom<T>( T sourceItem ) where T : new()
+      {
+         string partitionKey = sourceItem.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>();
+         string rowKey = sourceItem.ReadPropertyDecoratedWith<RowKeyAttribute,string>();
+
+         return HydrateFrom( sourceItem, partitionKey, rowKey );
+      }
+
+      public static GenericEntity HydrateFrom<T>( T sourceItem, string partitionKey, string rowKey ) where T : new()
       {
          var genericEntity = new GenericEntity();
-         foreach ( var property in sourceItem.GetType().GetProperties() )
+         foreach ( var property in sourceItem.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
          {
-            if ( ShouldSerialize( property ) )
+            if ( InvalidPropertyNames.Contains( property.Name ) )
             {
-               var valueOfProperty = property.GetValue( sourceItem, null );
-               genericEntity[property.Name] = new EntityPropertyInfo( valueOfProperty, property.PropertyType, valueOfProperty == null );
+               throw new InvalidEntityException( string.Format( "Invalid property name {0}", property.Name ) );
             }
+            var valueOfProperty = property.GetValue( sourceItem, null );
+            genericEntity[property.Name] = new EntityPropertyInfo( valueOfProperty, property.PropertyType, valueOfProperty == null );
          }
 
          genericEntity.PartitionKey = partitionKey;
          genericEntity.RowKey = rowKey;
 
          return genericEntity;
-      }
-
-      private static bool ShouldSerialize( PropertyInfo property )
-      {
-         var shouldSerialize = !property.GetCustomAttributes( false ).OfType<DontSerializeAttribute>().Any();
-
-         shouldSerialize &= ( property.GetSetMethod() != null );
-         shouldSerialize &= ( property.GetGetMethod() != null );
-
-         return shouldSerialize;
       }
 
       public bool AreTheseEqual( GenericEntity rightSide )
