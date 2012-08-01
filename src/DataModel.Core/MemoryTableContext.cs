@@ -68,19 +68,11 @@ namespace TechSmith.CloudServices.DataModel.Core
             dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute>() );
          }
 
-         foreach ( var propertyToStore in itemToAdd.GetType().GetProperties() )
+         foreach ( var propertyToStore in itemToAdd.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
          {
-            if ( ShouldSerialize( propertyToStore ) )
-            {
-               dataToStore.Add( propertyToStore.Name, propertyToStore.GetValue( itemToAdd, null ) );
-            }
+            dataToStore.Add( propertyToStore.Name, propertyToStore.GetValue( itemToAdd, null ) );
          }
          return dataToStore;
-      }
-
-      private static bool ShouldSerialize( PropertyInfo propertyToStore )
-      {
-         return !propertyToStore.GetCustomAttributes( false ).OfType<DontSerializeAttribute>().Any();
       }
 
       public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
