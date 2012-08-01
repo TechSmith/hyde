@@ -15,7 +15,7 @@ namespace TechSmith.CloudServices.DataModel.Core.Tests
                              SecondType = "bar"
                           };
 
-         var genericItemToTest = GenericEntity.HydrateGenericEntityFromItem( itemToSave, "pk", "rk" );
+         var genericItemToTest = GenericEntity.HydrateFrom( itemToSave, "pk", "rk" );
 
 
          var wereCool = true;
@@ -30,6 +30,36 @@ namespace TechSmith.CloudServices.DataModel.Core.Tests
       }
 
       [TestMethod]
+      public void Hydrate_ItemDecoratedWithRowAndPartitionKeyAttributes_ReturnedGenericEntityHasCorrectProperties()
+      {
+         var itemToSave = new DecoratedItem
+                          {
+                             Id = "id",
+                             Name = "name",
+                             Age = 42,
+                          };
+         var genericEntity = GenericEntity.HydrateFrom( itemToSave );
+
+         Assert.AreEqual( "id", genericEntity.PartitionKey, "incorrect partition key" );
+         Assert.AreEqual( "name", genericEntity.RowKey, "incorrect row key" );
+         Assert.IsFalse( genericEntity.GetProperties().ContainsKey( "Id" ), "partition key property should not be serialized as separate property" );
+         Assert.IsFalse( genericEntity.GetProperties().ContainsKey( "Name" ), "row key property should not be serialized as separate property" );
+      }
+
+      [TestMethod]
+      public void CreateInstanceFromProperties_TargetTypeDecoratedWithRowAndPartitionKeyAttributes_RowAndPartitionKeySetCorrectly()
+      {
+         var genericEntity = new GenericEntity();
+         genericEntity.PartitionKey = "foo";
+         genericEntity.RowKey = "bar";
+         genericEntity["Age"] = new EntityPropertyInfo( 42, typeof( int ), false );
+
+         var item = genericEntity.CreateInstanceFromProperties<DecoratedItem>();
+         Assert.AreEqual( "foo", item.Id, "Incorrect partition key" );
+         Assert.AreEqual( "bar", item.Name, "Incorrect row key" );
+      }
+
+      [TestMethod]
       public void SimpleItemWithDontSerializeAttributeConvertsToGenericEntityCorrectly()
       {
          var itemToSave = new SimpleItemWithDontSerializeAttribute
@@ -38,7 +68,7 @@ namespace TechSmith.CloudServices.DataModel.Core.Tests
                              NotSerializedString = "bar"
                           };
 
-         var genericItemToTest = GenericEntity.HydrateGenericEntityFromItem( itemToSave, "pk", "rk" );
+         var genericItemToTest = GenericEntity.HydrateFrom( itemToSave, "pk", "rk" );
 
 
          var wereCool = true;
@@ -59,15 +89,5 @@ namespace TechSmith.CloudServices.DataModel.Core.Tests
 
          Assert.IsTrue( wereCool );
       }
-
-
-
-
-
-
-
-
-
-
    }
 }

@@ -778,6 +778,49 @@ namespace TechSmith.CloudServices.DataModel.CoreIntegrationTests
          Assert.AreEqual( 1100, result.Count() );
       }
 
+      [TestCategory( "Integration"), TestMethod]
+      public void Add_ItemHasPartitionAndRowKeyProperties_PartitionAndRowKeyAreCorrectlySaved()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+                                                {
+                                                   Id = "foo", Name = "bar", Age = 42
+                                                } );
+         _tableStorageProvider.Save();
+
+         var item = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+
+         Assert.AreEqual( "foo", item.Id, "partition key not set" );
+         Assert.AreEqual( "bar", item.Name, "row key not set" );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
+      public void Add_ItemHasPartitionAndRowKeyProperties_PropertiesAreNotSavedTwiceInTableStorage()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "48823", Name= "Kovacs", Age = 142, } );
+         _tableStorageProvider.Save();
+
+         var tableServiceContext = _client.GetDataServiceContext();
+         var item = ( from e in tableServiceContext.CreateQuery<DecoratedItemEntity>( _tableName )
+                      where e.PartitionKey == "48823" && e.RowKey == "Kovacs"
+                      select e ).AsTableServiceQuery().First();
+
+         Assert.IsNull( item.Id );
+         Assert.IsNull( item.Name );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
+      public void Add_ItemHasPropertiesNamedPartitionKeyAndRowKey_ThrowsInvalidEntityException()
+      {
+         try
+         {
+            _tableStorageProvider.Add( _tableName, new RowPointer { Id = "12367", PartitionKey = "abba", RowKey = "acac" } );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( InvalidEntityException )
+         {
+         }
+      }
+
       [TestCategory( "Integration" ), TestMethod]
       public void Upsert_ItemExistsAndIsThenUpdated_ItemIsProperlyUpdated()
       {
@@ -802,6 +845,21 @@ namespace TechSmith.CloudServices.DataModel.CoreIntegrationTests
 
          Assert.AreEqual( itemToUpsert.FirstType, itemInTable.FirstType );
       }
+      
+      [TestCategory( "Integration" ), TestMethod]
+      public void Upsert_ItemExistsAndHasPartitionAndRowKeys_ItemIsUpdated()
+      {
+         var item = new DecoratedItem { Id = "foo2", Name = "bar2", Age = 42 };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var upsertedItem = new DecoratedItem { Id = "foo2", Name = "bar2", Age = 34 };
+         _tableStorageProvider.Upsert( _tableName, upsertedItem );
+         _tableStorageProvider.Save();
+
+         upsertedItem = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo2", "bar2" );
+         Assert.AreEqual( 34, upsertedItem.Age );
+      }
 
       [TestCategory( "Integration" ), TestMethod]
       public void Update_ItemExistsAndUpdateIsValid_ShouldPerformTheUpdate()
@@ -820,6 +878,21 @@ namespace TechSmith.CloudServices.DataModel.CoreIntegrationTests
          var updatedItem = _tableStorageProvider.Get<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( updatedFirstTypeValue, updatedItem.FirstType );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
+      public void Update_ItemExistsAndHasPartitionAndRowKeyProperties_ItemIsUpdated()
+      {
+         var item = new DecoratedItem { Id = "foo", Name = "bar", Age = 42 };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var updatedItem = new DecoratedItem { Id = "foo", Name = "bar", Age = 34 };
+         _tableStorageProvider.Update( _tableName, updatedItem );
+         _tableStorageProvider.Save();
+
+         updatedItem = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+         Assert.AreEqual( 34, updatedItem.Age );
       }
 
       [TestCategory( "Integration" ), TestMethod]
