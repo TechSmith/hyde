@@ -64,6 +64,7 @@
     <Compile Include="AzureNamespaceProvider.cs" />
     <Compile Include="AzureQueueMessageAdapter.cs" />
     <Compile Include="AzureTableStorageProvider.cs" />
+    <Compile Include="CloudStorageAccountAdapter.cs" />
     <Compile Include="DontSerializeAttribute.cs" />
     <Compile Include="EntityAlreadyExistsException.cs" />
     <Compile Include="InvalidEntityException.cs" />
