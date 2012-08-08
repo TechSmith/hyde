@@ -382,6 +382,19 @@ namespace TechSmith.CloudServices.DataModel.CoreIntegrationTests
          Assert.AreEqual( 3, result.Count() );
       }
 
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void GetCollection_MultiplePartitions_ItemsFromAllPartitionsReturned()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "1", Name = "Jill", Age = 27 } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "2", Name = "Jim", Age = 32 } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "3", Name = "Jackie", Age = 12 } );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName );
+         Assert.AreEqual( 3, result.Count() );
+      }
+
       [TestCategory( "Integration" ), TestMethod]
       public void GetRange_NothingInStore_EmptyIEnumerableReturned()
       {
