@@ -52,6 +52,19 @@ namespace TechSmith.CloudServices.DataModel.Core
          return context.GetCollection<T>( tableName, partitionKey );
       }
 
+      /// <summary>
+      /// Return the entire contents of tableName.
+      /// </summary>
+      /// <typeparam name="T">type of the instances to return</typeparam>
+      /// <param name="tableName">name of the table</param>
+      /// <returns>all rows in tableName</returns>
+      public IEnumerable<T> GetCollection<T>( string tableName ) where T : new()
+      {
+         var context = GetContext( tableName );
+
+         return context.GetCollection<T>( tableName );
+      }
+
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
          var context = GetContext( tableName );

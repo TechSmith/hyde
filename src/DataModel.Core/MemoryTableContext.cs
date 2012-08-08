@@ -115,6 +115,11 @@ namespace TechSmith.CloudServices.DataModel.Core
          return result;
       }
 
+      public IEnumerable<T> GetCollection<T>( string tableName ) where T : new()
+      {
+         return GetTable( tableName ).TableEntries.Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
+      }
+
       public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
          return GetTable( tableName ).Where( partitionKey, _instanceId )

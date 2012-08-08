@@ -80,6 +80,18 @@ namespace TechSmith.CloudServices.DataModel.Core
          return valueAsGeneric;
       }
 
+      public IEnumerable<T> GetCollection<T>( string tableName ) where T : new()
+      {
+         // The object returned from AsTableServiceQuery doesn't play nicely with
+         // LINQ; you'll get an exception if you call Select() on it.
+// ReSharper disable LoopCanBeConvertedToQuery
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).AsTableServiceQuery() )
+// ReSharper restore LoopCanBeConvertedToQuery
+         {
+            yield return entity.CreateInstanceFromProperties<T>();
+         }
+      }
+
       public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
          return CreateQuery<GenericEntity>( tableName )
