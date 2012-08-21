@@ -1,3 +1,5 @@
+using TechSmith.Hyde.Common.DataAnnotations;
+
 namespace TechSmith.Hyde.Test
 {
    public class SimpleDataItem

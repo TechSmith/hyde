@@ -1,6 +1,6 @@
 using System.Data.Services.Client;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Azure
 {
    internal class AzureKeyValidator
    {

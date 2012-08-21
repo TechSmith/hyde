@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde;
+using TechSmith.Hyde.Azure;
 
 namespace TechSmith.Hyde.Test
 {
@@ -16,7 +17,7 @@ namespace TechSmith.Hyde.Test
                              SecondType = "bar"
                           };
 
-         var genericItemToTest = Hyde.GenericEntity.HydrateFrom( itemToSave, "pk", "rk" );
+         var genericItemToTest = GenericEntity.HydrateFrom( itemToSave, "pk", "rk" );
 
 
          var wereCool = true;
@@ -39,7 +40,7 @@ namespace TechSmith.Hyde.Test
                              Name = "name",
                              Age = 42,
                           };
-         var genericEntity = Hyde.GenericEntity.HydrateFrom( itemToSave );
+         var genericEntity = GenericEntity.HydrateFrom( itemToSave );
 
          Assert.AreEqual( "id", genericEntity.PartitionKey, "incorrect partition key" );
          Assert.AreEqual( "name", genericEntity.RowKey, "incorrect row key" );
@@ -69,7 +70,7 @@ namespace TechSmith.Hyde.Test
                              NotSerializedString = "bar"
                           };
 
-         var genericItemToTest = Hyde.GenericEntity.HydrateFrom( itemToSave, "pk", "rk" );
+         var genericItemToTest = GenericEntity.HydrateFrom( itemToSave, "pk", "rk" );
 
 
          var wereCool = true;

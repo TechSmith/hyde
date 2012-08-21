@@ -1,7 +1,8 @@
 ﻿using System.Linq;
 using System.Reflection;
+using TechSmith.Hyde.Common.DataAnnotations;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Common
 {
    internal static class PropertyInfoExtensions
    {

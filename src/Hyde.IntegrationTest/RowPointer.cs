@@ -1,4 +1,6 @@
-﻿namespace TechSmith.Hyde.IntegrationTest
+﻿using TechSmith.Hyde.Common.DataAnnotations;
+
+namespace TechSmith.Hyde.IntegrationTest
 {
    /// <summary>
    /// A record that points at another record, for testing purposes.

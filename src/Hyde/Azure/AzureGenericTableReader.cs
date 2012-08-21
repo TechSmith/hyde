@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Azure
 {
    internal class AzureGenericTableReader
    {

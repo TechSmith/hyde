@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TechSmith.Hyde.Common;
+using TechSmith.Hyde.Common.DataAnnotations;
 
 namespace TechSmith.Hyde
 {

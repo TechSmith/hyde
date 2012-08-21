@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Common.DataAnnotations
 {
 
    [AttributeUsage( AttributeTargets.Property )]

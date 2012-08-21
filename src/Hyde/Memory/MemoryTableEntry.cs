@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Memory
 {
    internal class MemoryTableEntry
    {

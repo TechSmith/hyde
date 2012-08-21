@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Reflection;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Common
 {
    internal static class ObjectExtensions
    {

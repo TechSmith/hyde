@@ -2,6 +2,7 @@
 using System.Data.Services.Client;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TechSmith.Hyde.Common;
 
 namespace TechSmith.Hyde.Test
 {

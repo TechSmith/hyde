@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Azure
 {
    internal static class AzureNamespaceProvider
    {

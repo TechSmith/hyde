@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Common
 {
    [Serializable]
    public class EntityDoesNotExistException : Exception

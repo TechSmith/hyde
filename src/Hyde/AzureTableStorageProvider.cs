@@ -1,3 +1,5 @@
+using TechSmith.Hyde.Azure;
+
 namespace TechSmith.Hyde
 {
    public class AzureTableStorageProvider : TableStorageProvider

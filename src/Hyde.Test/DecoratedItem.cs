@@ -1,4 +1,6 @@
-﻿namespace TechSmith.Hyde.Test
+﻿using TechSmith.Hyde.Common.DataAnnotations;
+
+namespace TechSmith.Hyde.Test
 {
    /// <summary>
    /// Class with decorated partition and row key properties, for testing purposes.

@@ -1,3 +1,5 @@
+using TechSmith.Hyde.Memory;
+
 namespace TechSmith.Hyde
 {
    public class InMemoryTableStorageProvider : TableStorageProvider

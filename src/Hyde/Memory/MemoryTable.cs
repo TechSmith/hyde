@@ -2,8 +2,9 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using TechSmith.Hyde.Common;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Memory
 {
    internal class MemoryTable
    {

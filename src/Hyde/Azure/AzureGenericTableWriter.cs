@@ -4,7 +4,7 @@ using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Azure
 {
    internal class AzureGenericTableWriter
    {

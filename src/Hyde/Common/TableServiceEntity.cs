@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Common
 {
    internal class TableServiceEntity
    {

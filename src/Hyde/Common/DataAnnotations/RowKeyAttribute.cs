@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Common.DataAnnotations
 {
    /// <summary>
    /// Marks a property as a table storage row key. Property must have string type.

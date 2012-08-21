@@ -3,6 +3,8 @@ using System.Configuration;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.StorageClient;
+using TechSmith.Hyde.Common;
+using TechSmith.Hyde.Common.DataAnnotations;
 
 namespace TechSmith.Hyde.IntegrationTest
 {
@@ -790,13 +792,10 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( 1100, result.Count() );
       }
 
-      [TestCategory( "Integration"), TestMethod]
+      [TestCategory( "Integration" ), TestMethod]
       public void Add_ItemHasPartitionAndRowKeyProperties_PartitionAndRowKeyAreCorrectlySaved()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem
-                                                {
-                                                   Id = "foo", Name = "bar", Age = 42
-                                                } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "foo", Name = "bar", Age = 42 } );
          _tableStorageProvider.Save();
 
          var item = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
@@ -808,7 +807,7 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" ), TestMethod]
       public void Add_ItemHasPartitionAndRowKeyProperties_PropertiesAreNotSavedTwiceInTableStorage()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "48823", Name= "Kovacs", Age = 142, } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "48823", Name = "Kovacs", Age = 142, } );
          _tableStorageProvider.Save();
 
          var tableServiceContext = _client.GetDataServiceContext();
@@ -825,7 +824,12 @@ namespace TechSmith.Hyde.IntegrationTest
       {
          try
          {
-            _tableStorageProvider.Add( _tableName, new RowPointer { Id = "12367", PartitionKey = "abba", RowKey = "acac" } );
+            _tableStorageProvider.Add( _tableName, new RowPointer
+            {
+               Id = "12367",
+               PartitionKey = "abba",
+               RowKey = "acac"
+            } );
             Assert.Fail( "Should have thrown exception" );
          }
          catch ( InvalidEntityException )
@@ -845,10 +849,7 @@ namespace TechSmith.Hyde.IntegrationTest
          _tableStorageProvider.Save();
 
          _tableStorageProvider = new AzureTableStorageProvider( _storageAccount );
-         itemToUpsert = new TypeWithStringProperty
-         {
-            FirstType = "second"
-         };
+         itemToUpsert = new TypeWithStringProperty { FirstType = "second" };
 
          _tableStorageProvider.Upsert( _tableName, itemToUpsert, _partitionKey, _rowKey );
          _tableStorageProvider.Save();
@@ -857,7 +858,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
          Assert.AreEqual( itemToUpsert.FirstType, itemInTable.FirstType );
       }
-      
+
       [TestCategory( "Integration" ), TestMethod]
       public void Upsert_ItemExistsAndHasPartitionAndRowKeys_ItemIsUpdated()
       {
@@ -951,7 +952,7 @@ namespace TechSmith.Hyde.IntegrationTest
          }
       }
 
-      [TestMethod]
+      [TestMethod, TestCategory( "Integration" )]
       public void Insert_ItemWithDateTimeField_DateTimeFieldStaysUtc()
       {
          const string partitionKey = "DONTCARE1";
