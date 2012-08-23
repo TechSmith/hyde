@@ -4,7 +4,7 @@ using System.Linq;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Table
 {
    public abstract class TableStorageProvider
    {

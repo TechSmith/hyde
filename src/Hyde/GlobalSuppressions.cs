@@ -8,4 +8,4 @@
 // "In Project Suppression File".
 // You do not need to add suppressions to this file manually.
 
-[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Scope = "member", Target = "TechSmith.Hyde.GenericEntity.#.cctor()" )]
+[assembly: System.Diagnostics.CodeAnalysis.SuppressMessage( "Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Scope = "member", Target = "TechSmith.Hyde.Table.Azure.GenericEntity.#.cctor()" )]

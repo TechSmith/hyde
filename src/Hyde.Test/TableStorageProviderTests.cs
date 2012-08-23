@@ -3,6 +3,7 @@ using System.Data.Services.Client;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde.Common;
+using TechSmith.Hyde.Table;
 
 namespace TechSmith.Hyde.Test
 {

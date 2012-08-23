@@ -12,6 +12,9 @@ Object to Entity mapper for Windows Azure (Think ORM for table storage).
 ### Basic Example
 
 ```csharp
+using TechSmith.Hyde;
+using TechSmith.Hyde.Table;
+
 public class Color
 {
   public string HexColorCode

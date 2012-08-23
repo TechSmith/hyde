@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace TechSmith.Hyde
+namespace TechSmith.Hyde.Table
 {
    public interface ITableContext
    {

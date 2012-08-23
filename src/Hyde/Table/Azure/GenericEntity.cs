@@ -5,7 +5,7 @@ using System.Linq;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
 
-namespace TechSmith.Hyde.Azure
+namespace TechSmith.Hyde.Table.Azure
 {
    // Modified from Jai Haridas: http://social.msdn.microsoft.com/Forums/en-US/windowsazure/thread/481afa1b-03a9-42d9-ae79-9d5dc33b9297/
    internal class GenericEntity : Microsoft.WindowsAzure.StorageClient.TableServiceEntity

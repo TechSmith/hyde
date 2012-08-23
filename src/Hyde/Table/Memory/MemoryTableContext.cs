@@ -2,11 +2,11 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using TechSmith.Hyde.Azure;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
+using TechSmith.Hyde.Table.Azure;
 
-namespace TechSmith.Hyde.Memory
+namespace TechSmith.Hyde.Table.Memory
 {
    internal class MemoryTableContext : ITableContext
    {

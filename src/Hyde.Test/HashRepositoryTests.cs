@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TechSmith.Hyde.Table;
 
 namespace TechSmith.Hyde.Test
 {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TechSmith.Hyde.Common;
 
-namespace TechSmith.Hyde.Memory
+namespace TechSmith.Hyde.Table.Memory
 {
    internal class MemoryTable
    {

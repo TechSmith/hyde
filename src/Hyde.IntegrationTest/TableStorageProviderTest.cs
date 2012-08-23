@@ -5,6 +5,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.StorageClient;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
+using TechSmith.Hyde.Table;
 
 namespace TechSmith.Hyde.IntegrationTest
 {

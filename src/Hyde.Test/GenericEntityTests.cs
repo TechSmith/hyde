@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde;
-using TechSmith.Hyde.Azure;
+using TechSmith.Hyde.Table.Azure;
 
 namespace TechSmith.Hyde.Test
 {
