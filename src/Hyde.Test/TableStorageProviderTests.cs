@@ -870,6 +870,23 @@ namespace TechSmith.Hyde.Test
          Assert.AreEqual( "first", result.FirstType );
       }
 
+      [TestMethod]
+      public void Add_AddingItemWithPropertyWithInternalGetter_WillSerializeTheProperty()
+      {
+         var item = new TypeWithPropertyWithInternalGetter
+         {
+            FirstType = "a",
+            PropertyWithInternalGetter = 1
+         };
+
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get<TypeWithPropertyWithInternalGetter>( _tableName, _partitionKey, _rowKey );
+
+         Assert.AreEqual( 1, result.PropertyWithInternalGetter );
+      }
+
       private void EnsureOneItemInContext( TableStorageProvider tableStorageProvider )
       {
          var item = new SimpleDataItem

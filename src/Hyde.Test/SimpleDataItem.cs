@@ -33,4 +33,9 @@ namespace TechSmith.Hyde.Test
       }
    }
 
+   public class TypeWithPropertyWithInternalGetter
+   {
+      public string FirstType { get; set; }
+      public int PropertyWithInternalGetter { internal get; set; }
+   }
 }

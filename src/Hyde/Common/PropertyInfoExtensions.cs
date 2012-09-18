@@ -10,8 +10,8 @@ namespace TechSmith.Hyde.Common
       {
          var shouldSerialize = !property.GetCustomAttributes( typeof( DontSerializeAttribute ), inherit: true ).Any();
 
-         shouldSerialize &= ( property.GetSetMethod() != null );
-         shouldSerialize &= ( property.GetGetMethod() != null );
+         shouldSerialize &= (property.CanWrite);
+         shouldSerialize &= (property.CanRead);
 
          return shouldSerialize;
       }
