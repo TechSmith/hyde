@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Services.Client;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -7,6 +8,31 @@ using TechSmith.Hyde.Table;
 
 namespace TechSmith.Hyde.Test
 {
+   public static class SimpleDataItemExtensions
+   {
+      public static bool ComesBefore( this SimpleDataItem thisNode, IEnumerable<SimpleDataItem> listOfDataItems, SimpleDataItem laterNode )
+      {
+         int indexOfFirst = 0;
+         int indexOfSecond = 0;
+
+         int counter = 0;
+         foreach ( var currentItemInIteration in listOfDataItems )
+         {
+            if ( currentItemInIteration.FirstType == thisNode.FirstType )
+            {
+               indexOfFirst = counter;
+            }
+            else if ( currentItemInIteration.FirstType == laterNode.FirstType )
+            {
+               indexOfSecond = counter;
+            }
+            counter++;
+         }
+
+         return indexOfFirst < indexOfSecond;
+      }
+   }
+
    [TestClass]
    public class TableStorageProviderTests
    {
@@ -868,6 +894,31 @@ namespace TechSmith.Hyde.Test
          var result = secondStorageProvider.Get<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( "first", result.FirstType );
+      }
+
+      [TestMethod]
+      public void GetCollection_ManyItemsInStore_ShouldBeRetreivedInProperSortedOrder()
+      {
+         var dataItem1 = new SimpleDataItem { FirstType = "a", SecondType = 1 };
+         var dataItem2 = new SimpleDataItem { FirstType = "b", SecondType = 2 };
+         var dataItem3 = new SimpleDataItem { FirstType = "c", SecondType = 3 };
+         var dataItem4 = new SimpleDataItem { FirstType = "d", SecondType = 4 };
+
+         _tableStorageProvider.Add( _tableName, dataItem1, _partitionKey, "3" );
+         _tableStorageProvider.Add( _tableName, dataItem2, _partitionKey, "2" );
+         _tableStorageProvider.Add( _tableName, dataItem3, _partitionKey, "1" );
+         _tableStorageProvider.Add( _tableName, dataItem4, _partitionKey, "4" );
+
+         var listOfItems = _tableStorageProvider.GetCollection<SimpleDataItem>( _tableName, _partitionKey );
+
+         Assert.IsTrue( dataItem3.ComesBefore( listOfItems, dataItem1 ), "Making sure item 3 comes before item 1." );
+         Assert.IsTrue( dataItem3.ComesBefore( listOfItems, dataItem2 ), "Making sure item 3 comes before item 2." );
+         Assert.IsTrue( dataItem3.ComesBefore( listOfItems, dataItem4 ), "Making sure item 3 comes before item 4." );
+
+         Assert.IsTrue( dataItem2.ComesBefore( listOfItems, dataItem1 ), "Making sure item 2 comes before item 1." );
+         Assert.IsTrue( dataItem2.ComesBefore( listOfItems, dataItem4 ), "Making sure item 2 comes before item 4." );
+
+         Assert.IsTrue( dataItem1.ComesBefore( listOfItems, dataItem4 ), "Making sure item 1 comes before item 4." );
       }
 
       private void EnsureOneItemInContext( TableStorageProvider tableStorageProvider )
