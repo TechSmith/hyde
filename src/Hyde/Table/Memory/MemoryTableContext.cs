@@ -59,12 +59,12 @@ namespace TechSmith.Hyde.Table.Memory
 
          if ( itemToAdd.HasPropertyDecoratedWith<PartitionKeyAttribute>() )
          {
-            dataToStore.Add( _partitionKeyName, itemToAdd.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>() );
+            dataToStore.Add( _partitionKeyName, itemToAdd.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>() );
          }
 
          if ( itemToAdd.HasPropertyDecoratedWith<RowKeyAttribute>() )
          {
-            dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute,string>() );
+            dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute, string>() );
          }
 
          foreach ( var propertyToStore in itemToAdd.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
@@ -96,14 +96,14 @@ namespace TechSmith.Hyde.Table.Memory
             switch ( key )
             {
                case _partitionKeyName:
-                  result.WritePropertyDecoratedWith<PartitionKeyAttribute,string>( (string)dataForItem[key] );
-                  break;
+               result.WritePropertyDecoratedWith<PartitionKeyAttribute, string>( (string) dataForItem[key] );
+               break;
                case _rowKeyName:
-                  result.WritePropertyDecoratedWith<RowKeyAttribute,string>( (string)dataForItem[key] );
-                  break;
+               result.WritePropertyDecoratedWith<RowKeyAttribute, string>( (string) dataForItem[key] );
+               break;
                default:
-                  typeToHydrate.GetProperty( key ).SetValue( result, dataForItem[key], null );
-                  break;
+               typeToHydrate.GetProperty( key ).SetValue( result, dataForItem[key], null );
+               break;
             }
          }
 
@@ -127,9 +127,21 @@ namespace TechSmith.Hyde.Table.Memory
                    .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
       }
 
+      [Obsolete( "Use GetRangeByPartitionKey instead." )]
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
-         return GetTable( tableName ).WhereRange( partitionKeyLow, partitionKeyHigh, _instanceId )
+         return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
+      }
+
+      public IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
+      {
+         return GetTable( tableName ).WhereRangeByPartitionKey( partitionKeyLow, partitionKeyHigh, _instanceId )
+                   .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
+      }
+
+      public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
+      {
+         return GetTable( tableName ).WhereRangeByRowKey( partitionKey, rowKeyLow, rowKeyHigh, _instanceId )
                    .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ) ) );
       }
 

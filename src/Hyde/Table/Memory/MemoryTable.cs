@@ -38,17 +38,22 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IEnumerable<KeyValuePair<TableServiceEntity, MemoryTableEntry>> Where( string partitionKey, string rowKey, Guid callerInstanceId )
       {
-         return TableEntries.Where( p => EntryKeysMatch( partitionKey, rowKey, p ) && p.Value.IsVisibleTo( callerInstanceId ) );
+         return TableEntries.Where( p => EntryKeysMatch( partitionKey, rowKey, p ) && p.Value.IsVisibleTo( callerInstanceId ) ).OrderBy( p => p.Key.RowKey );
       }
 
       public IEnumerable<KeyValuePair<TableServiceEntity, MemoryTableEntry>> Where( string partitionKey, Guid callerInstanceId )
       {
-         return TableEntries.Where( p => p.Key.PartitionKey == partitionKey && p.Value.IsVisibleTo( callerInstanceId ) );
+         return TableEntries.Where( p => p.Key.PartitionKey == partitionKey && p.Value.IsVisibleTo( callerInstanceId ) ).OrderBy( p => p.Key.RowKey );
       }
 
-      public IEnumerable<KeyValuePair<TableServiceEntity, MemoryTableEntry>> WhereRange( string partitionKeyLow, string partitionKeyHigh, Guid callerInstanceId )
+      public IEnumerable<KeyValuePair<TableServiceEntity, MemoryTableEntry>> WhereRangeByPartitionKey( string partitionKeyLow, string partitionKeyHigh, Guid callerInstanceId )
       {
-         return TableEntries.Where( p => p.Key.PartitionKey.CompareTo( partitionKeyLow ) >= 0 && p.Key.PartitionKey.CompareTo( partitionKeyHigh ) <= 0 && p.Value.IsVisibleTo( callerInstanceId ) );
+         return TableEntries.Where( p => p.Key.PartitionKey.CompareTo( partitionKeyLow ) >= 0 && p.Key.PartitionKey.CompareTo( partitionKeyHigh ) <= 0 && p.Value.IsVisibleTo( callerInstanceId ) ).OrderBy( p => p.Key.RowKey );
+      }
+
+      public IEnumerable<KeyValuePair<TableServiceEntity, MemoryTableEntry>> WhereRangeByRowKey( string partitionKey, string rowKeyLow, string rowKeyHigh, Guid callerInstanceId )
+      {
+         return TableEntries.Where( p => p.Key.PartitionKey == partitionKey && p.Key.RowKey.CompareTo( rowKeyLow ) >= 0 && p.Key.RowKey.CompareTo( rowKeyHigh ) <= 0 && p.Value.IsVisibleTo( callerInstanceId ) ).OrderBy( p => p.Key.RowKey );
       }
 
       private static bool EntryKeysMatch( string partitionKey, string rowKey, KeyValuePair<TableServiceEntity, MemoryTableEntry> p )

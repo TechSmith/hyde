@@ -100,11 +100,27 @@ namespace TechSmith.Hyde.Table.Azure
             .Select( g => g.CreateInstanceFromProperties<T>() );
       }
 
+      [Obsolete( "Use GetRangeByPartitionKey instead." )]
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
+      {
+         return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
+      }
+
+      public IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
          return CreateQuery<GenericEntity>( tableName )
             .Where( p => p.PartitionKey.CompareTo( partitionKeyLow ) >= 0 &&
                          p.PartitionKey.CompareTo( partitionKeyHigh ) <= 0 )
+            .AsTableServiceQuery()
+            .ToArray()
+            .Select( g => g.CreateInstanceFromProperties<T>() );
+      }
+
+      public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
+      {
+         return CreateQuery<GenericEntity>( tableName )
+            .Where( p => p.RowKey.CompareTo( rowKeyLow ) >= 0 &&
+                         p.RowKey.CompareTo( rowKeyHigh ) <= 0 )
             .AsTableServiceQuery()
             .ToArray()
             .Select( g => g.CreateInstanceFromProperties<T>() );

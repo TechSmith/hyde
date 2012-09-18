@@ -28,8 +28,8 @@ namespace TechSmith.Hyde.Table
       /// <exception cref="ArgumentException">if T does not have properties decorated with PartitionKey and RowKey</exception>
       public void Add<T>( string tableName, T instance ) where T : new()
       {
-         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>();
-         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute,string>();
+         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
          Add( tableName, instance, partitionKey, rowKey );
       }
 
@@ -67,11 +67,24 @@ namespace TechSmith.Hyde.Table
          return context.GetCollection<T>( tableName );
       }
 
+      [Obsolete( "Use GetRangeByPartitionKey instead." )]
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
+      {
+         return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
+      }
+
+      public IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
          var context = GetContext( tableName );
 
-         return context.GetRange<T>( tableName, partitionKeyLow, partitionKeyHigh );
+         return context.GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
+      }
+
+      public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
+      {
+         var context = GetContext( tableName );
+
+         return context.GetRangeByRowKey<T>( tableName, partitionKey, rowKeyLow, rowKeyHigh );
       }
 
       private ITableContext GetContext( string tableName )
@@ -102,8 +115,8 @@ namespace TechSmith.Hyde.Table
 
       public void Upsert<T>( string tableName, T instance ) where T : new()
       {
-         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>();
-         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute,string>();
+         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
          Upsert( tableName, instance, partitionKey, rowKey );
       }
 
@@ -116,8 +129,8 @@ namespace TechSmith.Hyde.Table
 
       public void Delete<T>( string tableName, T instance )
       {
-         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>();
-         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute,string>();
+         var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         var rowKey = instance.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
          Delete( tableName, partitionKey, rowKey );
       }
 
@@ -136,8 +149,8 @@ namespace TechSmith.Hyde.Table
 
       public void Update<T>( string tableName, T item ) where T : new()
       {
-         var partitionKey = item.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>();
-         var rowKey = item.ReadPropertyDecoratedWith<RowKeyAttribute,string>();
+         var partitionKey = item.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         var rowKey = item.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
          Update( tableName, item, partitionKey, rowKey );
       }
 

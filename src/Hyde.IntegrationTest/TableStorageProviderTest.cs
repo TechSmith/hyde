@@ -398,14 +398,14 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetRange_NothingInStore_EmptyIEnumerableReturned()
+      public void GetRangeByPartitionKey_NothingInStore_EmptyIEnumerableReturned()
       {
-         var result = _tableStorageProvider.GetRange<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKeyForRange );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKeyForRange );
          Assert.AreEqual( 0, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetRange_OneItemInStore_EnumerableWithOneItemReturned()
+      public void GetRangeByPartitionKey_OneItemInStore_EnumerableWithOneItemReturned()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
@@ -413,12 +413,12 @@ namespace TechSmith.Hyde.IntegrationTest
          }, _partitionKey, "a" );
          _tableStorageProvider.Save();
 
-         var result = _tableStorageProvider.GetRange<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKeyForRange );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKeyForRange );
          Assert.AreEqual( 1, result.Count() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void GetRange_ManyItemsInStoreOneOutsideOfRange_EnumerableWithOneLessThanTheTotalOfItemsReturned()
+      public void GetRangeByPartitionKey_ManyItemsInStoreOneOutsideOfRange_EnumerableWithOneLessThanTheTotalOfItemsReturned()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty
          {
@@ -434,7 +434,8 @@ namespace TechSmith.Hyde.IntegrationTest
          }, "0", "c" );
          _tableStorageProvider.Save();
 
-         var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey );
+         var result = _tableStorageProvider.GetRangeByPartitionKey<TypeWithStringProperty>( _tableName, _partitionKey, _partitionKey );
+
          Assert.AreEqual( 2, result.Count() );
       }
 
@@ -969,6 +970,57 @@ namespace TechSmith.Hyde.IntegrationTest
 
          Assert.IsTrue( DateTimesPrettyMuchEqual( itemWithDateTime.DateTimeField, retrievedItem.DateTimeField ) );
          Assert.AreEqual( DateTimeKind.Utc, retrievedItem.DateTimeField.Kind );
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void GetRangeByRowKey_ZeroItemsInStore_EnumerableWithNoItemsReturned()
+      {
+         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );
+
+         Assert.AreEqual( 0, result.Count() );
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void GetRangeByRowKey_OneItemInStoreButDoesntMatchPredicate_EnumerableWithNoItemsReturned()
+      {
+         var item = new TypeWithStringProperty { FirstType = "a" };
+         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item, _partitionKey, "there" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );
+
+         Assert.AreEqual( 0, result.Count() );
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void GetRangeByRowKey_OneItemInStore_EnumerableWithNoItemsReturned()
+      {
+         var item = new TypeWithStringProperty { FirstType = "a" };
+         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item, _partitionKey, "hithere" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );
+
+         Assert.AreEqual( 1, result.Count() );
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void GetRangeByRowKey_ManyItemsInStore_EnumerableWithAppropriateItemsReturned()
+      {
+         var item1 = new TypeWithStringProperty { FirstType = "a" };
+         var item2 = new TypeWithStringProperty { FirstType = "b" };
+         var item3 = new TypeWithStringProperty { FirstType = "c" };
+         var item4 = new TypeWithStringProperty { FirstType = "d" };
+
+         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item1, _partitionKey, "asdf" );
+         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item2, _partitionKey, "hithere" );
+         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item3, _partitionKey, "jklh" );
+         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item4, _partitionKey, "hi" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );
+
+         Assert.AreEqual( 2, result.Count() );
       }
 
       private void EnsureOneItemInTableStorage()
