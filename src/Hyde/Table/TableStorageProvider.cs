@@ -47,11 +47,24 @@ namespace TechSmith.Hyde.Table
          return context.GetItem<T>( tableName, partitionKey, rowKey );
       }
 
+      public dynamic Get( string tableName, string partitionKey, string rowKey )
+      {
+         var context = GetContext( tableName );
+         return context.GetItem( tableName, partitionKey, rowKey );
+      }
+
       public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
          var context = GetContext( tableName );
 
          return context.GetCollection<T>( tableName, partitionKey );
+      }
+
+      public IEnumerable<dynamic> GetCollection( string tableName, string partitionKey )
+      {
+         var context = GetContext( tableName );
+
+         return context.GetCollection( tableName, partitionKey );
       }
 
       /// <summary>
@@ -80,11 +93,25 @@ namespace TechSmith.Hyde.Table
          return context.GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
       }
 
+      public IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
+      {
+         var context = GetContext( tableName );
+
+         return context.GetRangeByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh );
+      }
+
       public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
       {
          var context = GetContext( tableName );
 
          return context.GetRangeByRowKey<T>( tableName, partitionKey, rowKeyLow, rowKeyHigh );
+      }
+      
+      public IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
+      {
+         var context = GetContext( tableName );
+
+         return context.GetRangeByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh );
       }
 
       private ITableContext GetContext( string tableName )

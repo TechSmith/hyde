@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using TechSmith.Hyde.Common;
@@ -86,6 +87,20 @@ namespace TechSmith.Hyde.Table.Azure
          return newItem;
       }
 
+      public dynamic CreateInstanceFromProperties()
+      {
+         dynamic newItem = new ExpandoObject();
+
+         foreach ( var entityPropertyInfo in GetProperties() )
+         {
+            var value = TypeConverter( entityPropertyInfo.Value, entityPropertyInfo.Value.ObjectType );
+
+            ( (IDictionary<string, object>) newItem ).Add( entityPropertyInfo.Key, value );
+         }
+
+         return newItem;
+      }
+
       private static object TypeConverter( EntityPropertyInfo itemToConvert, Type type )
       {
          if ( itemToConvert.IsNull )
@@ -100,8 +115,8 @@ namespace TechSmith.Hyde.Table.Azure
 
       public static GenericEntity HydrateFrom<T>( T sourceItem ) where T : new()
       {
-         string partitionKey = sourceItem.ReadPropertyDecoratedWith<PartitionKeyAttribute,string>();
-         string rowKey = sourceItem.ReadPropertyDecoratedWith<RowKeyAttribute,string>();
+         string partitionKey = sourceItem.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         string rowKey = sourceItem.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
 
          return HydrateFrom( sourceItem, partitionKey, rowKey );
       }

@@ -56,12 +56,19 @@ namespace TechSmith.Hyde.Table.Azure
 
       public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
       {
-         var valueAsGeneric = GetItemAsGenericEntity<T>( tableName, partitionKey, rowKey );
+         var valueAsGeneric = GetItemAsGenericEntity( tableName, partitionKey, rowKey );
 
          return valueAsGeneric.CreateInstanceFromProperties<T>();
       }
 
-      private GenericEntity GetItemAsGenericEntity<T>( string tableName, string partitionKey, string rowKey ) where T : new()
+      public dynamic GetItem( string tableName, string partitionKey, string rowKey )
+      {
+         var valueAsGeneric = GetItemAsGenericEntity( tableName, partitionKey, rowKey );
+
+         return valueAsGeneric.CreateInstanceFromProperties();
+      }
+
+      private GenericEntity GetItemAsGenericEntity( string tableName, string partitionKey, string rowKey )
       {
          GenericEntity valueAsGeneric;
          try
@@ -91,13 +98,34 @@ namespace TechSmith.Hyde.Table.Azure
          }
       }
 
+      public IEnumerable<dynamic> GetCollection( string tableName )
+      {
+         // The object returned from AsTableServiceQuery doesn't play nicely with
+         // LINQ; you'll get an exception if you call Select() on it.
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).AsTableServiceQuery() )
+         {
+            yield return entity.CreateInstanceFromProperties();
+         }
+      }
+
       public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
-         return CreateQuery<GenericEntity>( tableName )
-            .Where( p => p.PartitionKey == partitionKey )
-            .AsTableServiceQuery()
-            .ToArray()
-            .Select( g => g.CreateInstanceFromProperties<T>() );
+         // The object returned from AsTableServiceQuery doesn't play nicely with
+         // LINQ; you'll get an exception if you call Select() on it.
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).Where( p => p.PartitionKey == partitionKey ).AsTableServiceQuery() )
+         {
+            yield return entity.CreateInstanceFromProperties<T>();
+         }
+      }
+
+      public IEnumerable<dynamic> GetCollection( string tableName, string partitionKey )
+      {
+         // The object returned from AsTableServiceQuery doesn't play nicely with
+         // LINQ; you'll get an exception if you call Select() on it.
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).Where( p => p.PartitionKey == partitionKey ).AsTableServiceQuery() )
+         {
+            yield return entity.CreateInstanceFromProperties();
+         }
       }
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
@@ -108,22 +136,49 @@ namespace TechSmith.Hyde.Table.Azure
 
       public IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
-         return CreateQuery<GenericEntity>( tableName )
-            .Where( p => p.PartitionKey.CompareTo( partitionKeyLow ) >= 0 &&
-                         p.PartitionKey.CompareTo( partitionKeyHigh ) <= 0 )
-            .AsTableServiceQuery()
-            .ToArray()
-            .Select( g => g.CreateInstanceFromProperties<T>() );
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName )
+                                    .Where( p => p.PartitionKey.CompareTo( partitionKeyLow ) >= 0 &&
+                                                 p.PartitionKey.CompareTo( partitionKeyHigh ) <= 0 )
+                                    .AsTableServiceQuery() )
+         {
+
+            yield return entity.CreateInstanceFromProperties<T>();
+         }
+      }
+
+      public IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
+      {
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName )
+                                    .Where( p => p.PartitionKey.CompareTo( partitionKeyLow ) >= 0 &&
+                                                 p.PartitionKey.CompareTo( partitionKeyHigh ) <= 0 )
+                                    .AsTableServiceQuery() )
+         {
+
+            yield return entity.CreateInstanceFromProperties();
+         }
       }
 
       public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
       {
-         return CreateQuery<GenericEntity>( tableName )
-            .Where( p => p.RowKey.CompareTo( rowKeyLow ) >= 0 &&
-                         p.RowKey.CompareTo( rowKeyHigh ) <= 0 )
-            .AsTableServiceQuery()
-            .ToArray()
-            .Select( g => g.CreateInstanceFromProperties<T>() );
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName )
+                                    .Where( p => p.RowKey.CompareTo( rowKeyLow ) >= 0 &&
+                                                 p.RowKey.CompareTo( rowKeyHigh ) <= 0 )
+                                    .AsTableServiceQuery() )
+         {
+
+            yield return entity.CreateInstanceFromProperties<T>();
+         }
+      }
+
+      public IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
+      {
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName )
+                                    .Where( p => p.RowKey.CompareTo( rowKeyLow ) >= 0 &&
+                                                 p.RowKey.CompareTo( rowKeyHigh ) <= 0 )
+                                    .AsTableServiceQuery() )
+         {
+            yield return entity.CreateInstanceFromProperties();
+         }
       }
 
       public void Save()
@@ -169,7 +224,7 @@ namespace TechSmith.Hyde.Table.Azure
          try
          {
             var genericToUpsert = GenericEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
-            var genericInStorage = GetItemAsGenericEntity<T>( tableName, partitionKey, rowKey );
+            var genericInStorage = GetItemAsGenericEntity( tableName, partitionKey, rowKey );
             if ( !genericToUpsert.AreTheseEqual( genericInStorage ) )
             {
                Detach( genericInStorage );
