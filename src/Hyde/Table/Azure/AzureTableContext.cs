@@ -42,6 +42,18 @@ namespace TechSmith.Hyde.Table.Azure
          return hostName.Contains( "127.0.0.1" ) || hostName.Contains( "localhost" );
       }
 
+      public void AddNewDynamicItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
+      {
+         try
+         {
+            AddObject( tableName, GenericEntity.HydrateFromDynamic( itemToAdd, partitionKey, rowKey ) );
+         }
+         catch ( InvalidOperationException ex )
+         {
+            throw new EntityAlreadyExistsException( "Entity already exists", ex );
+         }
+      }
+
       public void AddNewItem<T>( string tableName, T itemToAdd, string partitionKey, string rowKey ) where T : new()
       {
          try
@@ -219,6 +231,38 @@ namespace TechSmith.Hyde.Table.Azure
          }
       }
 
+      public void UpsertDynamic( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
+      {
+         if ( IsLocalDevRequest( BaseUri.Host ) )
+         {
+            UpsertDynamicForDevStorage( tableName, itemToUpsert, partitionKey, rowKey );
+         }
+         else
+         {
+            var genericToUpsert = GenericEntity.HydrateFromDynamic( itemToUpsert, partitionKey, rowKey );
+            AttachTo( tableName, genericToUpsert );
+            UpdateObject( genericToUpsert );
+         }
+      }
+
+      private void UpsertDynamicForDevStorage( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
+      {
+         try
+         {
+            var genericToUpsert = GenericEntity.HydrateFromDynamic( itemToUpsert, partitionKey, rowKey );
+            var genericInStorage = GetItemAsGenericEntity( tableName, partitionKey, rowKey );
+            if ( !genericToUpsert.AreTheseEqual( genericInStorage ) )
+            {
+               Detach( genericInStorage );
+               UpdateDynamic( tableName, itemToUpsert, partitionKey, rowKey );
+            }
+         }
+         catch ( EntityDoesNotExistException )
+         {
+            AddNewDynamicItem( tableName, itemToUpsert, partitionKey, rowKey );
+         }
+      }
+
       private void UpsertForDevStorage<T>( string tableName, T itemToUpsert, string partitionKey, string rowKey ) where T : new()
       {
          try
@@ -278,6 +322,15 @@ namespace TechSmith.Hyde.Table.Azure
                DeleteObject( genericEntity );
             }
          }
+      }
+
+      public void UpdateDynamic( string tableName, dynamic updatedItem, string partitionKey, string rowKey )
+      {
+         var genericToUpdate = GenericEntity.HydrateFromDynamic( updatedItem, partitionKey, rowKey );
+
+         const string eTagThatSpecifiesWeShouldNotAddIfDoesNotExist = "*";
+         AttachTo( tableName, genericToUpdate, eTagThatSpecifiesWeShouldNotAddIfDoesNotExist );
+         UpdateObject( genericToUpdate );
       }
 
       public void Update<T>( string tableName, T updatedItem, string partitionKey, string rowKey ) where T : new()

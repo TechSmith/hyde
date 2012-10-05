@@ -40,6 +40,13 @@ namespace TechSmith.Hyde.Table
          context.AddNewItem( tableName, instance, partitionKey, rowKey );
       }
 
+      public void AddDynamic( string tableName, dynamic instance, string partitionKey, string rowKey )
+      {
+         var context = GetContext( tableName );
+
+         context.AddNewDynamicItem( tableName, instance, partitionKey, rowKey );
+      }
+
       public T Get<T>( string tableName, string partitionKey, string rowKey ) where T : new()
       {
          var context = GetContext( tableName );
@@ -140,6 +147,13 @@ namespace TechSmith.Hyde.Table
          }
       }
 
+      public void UpsertDynamic( string tableName, dynamic instance, string partitionKey, string rowKey )
+      {
+         var context = GetContext();
+         context.UpsertDynamic( tableName, instance, partitionKey, rowKey );
+         _contextsToSave.Add( context );
+      }
+
       public void Upsert<T>( string tableName, T instance ) where T : new()
       {
          var partitionKey = instance.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
@@ -172,6 +186,13 @@ namespace TechSmith.Hyde.Table
          var context = GetContext( tableName );
 
          context.DeleteCollection( tableName, partitionKey );
+      }
+
+      public void UpdateDynamic( string tableName, dynamic item, string partitionKey, string rowKey )
+      {
+         var context = GetContext();
+         context.UpdateDynamic( tableName, item, partitionKey, rowKey );
+         _contextsToSave.Add( context );
       }
 
       public void Update<T>( string tableName, T item ) where T : new()

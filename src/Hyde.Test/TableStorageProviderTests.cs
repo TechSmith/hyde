@@ -202,6 +202,7 @@ namespace TechSmith.Hyde.Test
          var items = _tableStorageProvider.GetCollection<SimpleDataItem>( _tableName, _partitionKey );
 
          Assert.IsFalse( items.Any() );
+         Assert.IsFalse( items.Any() );
       }
 
       [TestMethod]

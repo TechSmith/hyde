@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Dynamic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TechSmith.Hyde;
 using TechSmith.Hyde.Table.Azure;
 
 namespace TechSmith.Hyde.Test
@@ -88,6 +88,25 @@ namespace TechSmith.Hyde.Test
          }
 
          wereCool &= genericItemToTest.GetProperties().Count == 1;
+
+         Assert.IsTrue( wereCool );
+      }
+
+      [TestMethod]
+      public void DynamicItemConvertsToGenericEntityCorrectly()
+      {
+         dynamic itemToSave = new ExpandoObject();
+         itemToSave.FirstType = "foo";
+         itemToSave.SecondType = "bar";
+
+         var genericItemToTest = GenericEntity.HydrateFromDynamic( itemToSave, "pk", "rk" );
+
+         var wereCool = true;
+
+         wereCool &= itemToSave.FirstType == genericItemToTest.GetProperties()["FirstType"].Value;
+         wereCool &= itemToSave.SecondType == genericItemToTest.GetProperties()["SecondType"].Value;
+
+         wereCool &= genericItemToTest.GetProperties().Count == 2;
 
          Assert.IsTrue( wereCool );
       }

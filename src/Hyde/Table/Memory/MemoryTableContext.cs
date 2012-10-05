@@ -34,6 +34,28 @@ namespace TechSmith.Hyde.Table.Memory
          return _memoryTables[tableName];
       }
 
+      public void AddNewDynamicItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
+      {
+         AzureKeyValidator.ValidatePartitionKey( partitionKey );
+         AzureKeyValidator.ValidateRowKey( rowKey );
+
+         //var itemAsDictionary = itemToAdd as IDictionary<string, object>;
+
+         // Hydrate the item, which performs validation that would also be done by the AzureTableContext.
+         //GenericEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
+
+         var table = GetTable( tableName );
+
+         if ( table.HasEntity( partitionKey, rowKey ) )
+         {
+            throw new EntityAlreadyExistsException();
+         }
+
+         var dataToStore = SerializeDynamicItemToData( itemToAdd );
+
+         table.Add( partitionKey, rowKey, _instanceId, dataToStore );
+      }
+
       public void AddNewItem<T>( string tableName, T itemToAdd, string partitionKey, string rowKey ) where T : new()
       {
          AzureKeyValidator.ValidatePartitionKey( partitionKey );
@@ -52,6 +74,36 @@ namespace TechSmith.Hyde.Table.Memory
          var dataToStore = SerializeItemToData( itemToAdd );
 
          table.Add( partitionKey, rowKey, _instanceId, dataToStore );
+      }
+
+      private static Dictionary<string, object> SerializeDynamicItemToData( dynamic itemToAdd )
+      {
+         var dataToStore = new Dictionary<string, object>();
+
+         //if ( itemToAdd.HasPropertyDecoratedWith<PartitionKeyAttribute>() )
+         //{
+            //dataToStore.Add( _partitionKeyName, itemToAdd.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>() );
+         //}
+
+         //if ( itemToAdd.HasPropertyDecoratedWith<RowKeyAttribute>() )
+         //{
+            //dataToStore.Add( _rowKeyName, itemToAdd.ReadPropertyDecoratedWith<RowKeyAttribute, string>() );
+         //}
+
+         //foreach ( var propertyToStore in itemToAdd.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
+         //{
+            //dataToStore.Add( propertyToStore.Name, propertyToStore.GetValue( itemToAdd, null ) );
+         //}
+         //return dataToStore;
+
+         var dictionary = itemToAdd as IDictionary<string, object>;
+
+         foreach ( var keyValuePair in dictionary )
+         {
+            dataToStore[keyValuePair.Key] = keyValuePair.Value;
+         }
+
+         return dataToStore;
       }
 
       private static Dictionary<string, object> SerializeItemToData<T>( T itemToAdd ) where T : new()
@@ -221,6 +273,21 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
+      public void UpsertDynamic( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
+      {
+         var table = GetTable( tableName );
+
+         if ( table.HasEntity( partitionKey, rowKey ) )
+         {
+            var serializedData = SerializeDynamicItemToData( itemToUpsert );
+            table.Update( partitionKey, rowKey, _instanceId, serializedData );
+         }
+         else
+         {
+            AddNewDynamicItem( tableName, itemToUpsert, partitionKey, rowKey );
+         }
+      }
+
       public void Upsert<T>( string tableName, T itemToUpsert, string partitionKey, string rowKey ) where T : new()
       {
          var table = GetTable( tableName );
@@ -260,6 +327,13 @@ namespace TechSmith.Hyde.Table.Memory
             keyValuePair.Value.IsDeleted = true;
             keyValuePair.Value.InstancesWhoHaveDeleted.Add( _instanceId );
          }
+      }
+
+      public void UpdateDynamic( string tableName, dynamic item, string partitionKey, string rowKey )
+      {
+         GetItem( tableName, partitionKey, rowKey );
+
+         UpsertDynamic( tableName, item, partitionKey, rowKey );
       }
 
       public void Update<T>( string tableName, T item, string partitionKey, string rowKey ) where T : new()

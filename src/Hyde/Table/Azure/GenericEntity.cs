@@ -112,6 +112,30 @@ namespace TechSmith.Hyde.Table.Azure
 
          return funcToCall( itemToConvert.Value.ToString() );
       }
+      
+      public static GenericEntity HydrateFromDynamic( dynamic sourceItem, string partitionKey, string rowKey )
+      {
+         var itemAsDictionary = sourceItem as IDictionary<string, object>;
+
+         var genericEntity = new GenericEntity();
+         if ( itemAsDictionary != null )
+         {
+            foreach ( var keyValuePair in itemAsDictionary )
+            {
+               if ( InvalidPropertyNames.Contains( keyValuePair.Key ) )
+               {
+                  throw new InvalidEntityException( string.Format( "Invalid property name {0}", keyValuePair.Key ) );
+               }
+               var valueOfProperty = keyValuePair.Value;
+               genericEntity[keyValuePair.Key] = new EntityPropertyInfo( valueOfProperty, keyValuePair.Value.GetType(), valueOfProperty == null );
+            }
+         }
+
+         genericEntity.PartitionKey = partitionKey;
+         genericEntity.RowKey = rowKey;
+
+         return genericEntity;
+      }
 
       public static GenericEntity HydrateFrom<T>( T sourceItem ) where T : new()
       {
