@@ -136,6 +136,5 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( "this text is changed.", result.FirstItem );
          Assert.AreEqual( 2, result.SecondItem );
       }
-
    }
 }

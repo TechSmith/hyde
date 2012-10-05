@@ -10,7 +10,7 @@
     <projectUrl>http://techsmith.github.com/hyde</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <releaseNotes>Initial release of Hyde, a library for generic access to Windows Azure Storage.</releaseNotes>
+    <releaseNotes>Adding support for retrieving dynamic objects and ability to query RowKeys by a range</releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
   </metadata>
