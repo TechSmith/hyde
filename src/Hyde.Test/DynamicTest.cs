@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Dynamic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Table;
 
 namespace TechSmith.Hyde.Test
@@ -16,6 +18,24 @@ namespace TechSmith.Hyde.Test
       {
          InMemoryTableStorageProvider.ResetAllTables();
          _tableStorageProvider = new InMemoryTableStorageProvider();
+      }
+
+      [TestMethod]
+      public void Get_ObjectInsertedIsInheritsDynamicObject_RetrievedProperly()
+      {
+         dynamic item = new DynamicPropertyBag();
+         item.Foo = "test";
+         item.Bar = 1;
+
+         string partitionKey = "partitionKey";
+         string rowKey = "rowKey";
+         _tableStorageProvider.Add( _tableName, item, partitionKey, rowKey );
+         _tableStorageProvider.Save();
+
+         dynamic result = _tableStorageProvider.Get( _tableName, partitionKey, rowKey );
+
+         Assert.AreEqual( item.Foo, result.Foo );
+         Assert.AreEqual( item.Bar, result.Bar );
       }
 
       [TestMethod]
@@ -61,6 +81,88 @@ namespace TechSmith.Hyde.Test
 
          Assert.AreEqual( 10, result.Count() );
          Assert.AreEqual( 1, result.First().Age );
+      }
+
+      [TestMethod]
+      public void Get_AddAndGetDynamic_DynamicIsReturnedWithAllProperties()
+      {
+         dynamic dyn = new ExpandoObject();
+
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
+
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+
+         Assert.AreEqual( "this is the first item.", result.FirstItem );
+         Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod]
+      public void UpsertDynamic_TheDynamicWasntInsertedYet_DynamicIsReturnedWithAllProperties()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Upsert( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.AreEqual( "this is the first item.", result.FirstItem );
+         Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod]
+      public void UpsertDynamic_TheDynamicAlreadyInsertedAndNeedsToBeUpdated_DynamicIsReturnedWithAllProperties()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+         dyn.FirstItem = "this text is changed.";
+         _tableStorageProvider.Upsert( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.AreEqual( "this text is changed.", result.FirstItem );
+         Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod]
+      public void UpdateDynamic_TheDynamicAlreadyInsertedAndNeedsToBeUpdated_DynamicIsReturnedWithAllProperties()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+         dyn.FirstItem = "this text is changed.";
+         _tableStorageProvider.Update( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.AreEqual( "this text is changed.", result.FirstItem );
+         Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( EntityDoesNotExistException ) )]
+      public void UpdateDynamic_ItemDoesNotExist_ShouldThrowEntityDoesNotExistException()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Update( _tableName, dyn, "pk", "rk" );
+
+         Assert.Fail( "Should have thrown EntityDoesNotExistException" );
       }
    }
 }

@@ -984,7 +984,7 @@ namespace TechSmith.Hyde.IntegrationTest
       public void GetRangeByRowKey_OneItemInStoreButDoesntMatchPredicate_EnumerableWithNoItemsReturned()
       {
          var item = new TypeWithStringProperty { FirstType = "a" };
-         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item, _partitionKey, "there" );
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, "there" );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );
@@ -996,7 +996,7 @@ namespace TechSmith.Hyde.IntegrationTest
       public void GetRangeByRowKey_OneItemInStore_EnumerableWithNoItemsReturned()
       {
          var item = new TypeWithStringProperty { FirstType = "a" };
-         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item, _partitionKey, "hithere" );
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, "hithere" );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );
@@ -1012,10 +1012,10 @@ namespace TechSmith.Hyde.IntegrationTest
          var item3 = new TypeWithStringProperty { FirstType = "c" };
          var item4 = new TypeWithStringProperty { FirstType = "d" };
 
-         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item1, _partitionKey, "asdf" );
-         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item2, _partitionKey, "hithere" );
-         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item3, _partitionKey, "jklh" );
-         _tableStorageProvider.Add<TypeWithStringProperty>( _tableName, item4, _partitionKey, "hi" );
+         _tableStorageProvider.Add( _tableName, item1, _partitionKey, "asdf" );
+         _tableStorageProvider.Add( _tableName, item2, _partitionKey, "hithere" );
+         _tableStorageProvider.Add( _tableName, item3, _partitionKey, "jklh" );
+         _tableStorageProvider.Add( _tableName, item4, _partitionKey, "hi" );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );

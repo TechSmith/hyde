@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using TechSmith.Hyde.Common;
+using TechSmith.Hyde.Table.Azure;
 
 namespace TechSmith.Hyde.Table.Memory
 {
@@ -18,8 +19,10 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
-      public void Add( string partitionKey, string rowKey, Guid callerInstanceId, Dictionary<string, object> properties )
+      public void Add( string partitionKey, string rowKey, Guid callerInstanceId, GenericEntity entity )
       {
+         Dictionary<string, object> properties = entity.GetProperties().ToDictionary( kp => kp.Key, kp => kp.Value.Value );
+
          var tableServiceEntity = new TableServiceEntity( partitionKey, rowKey );
 
          var entry = new MemoryTableEntry( properties, callerInstanceId );
@@ -61,7 +64,7 @@ namespace TechSmith.Hyde.Table.Memory
          return p.Key.PartitionKey == partitionKey && p.Key.RowKey == rowKey;
       }
 
-      public void Update( string partitionKey, string rowKey, Guid callerInstanceId, Dictionary<string, object> serializedData )
+      public void Update( string partitionKey, string rowKey, Guid callerInstanceId, GenericEntity entity )
       {
          bool entityExists = HasEntity( partitionKey, rowKey );
          if ( !entityExists )
@@ -70,6 +73,8 @@ namespace TechSmith.Hyde.Table.Memory
          }
 
          var actualEntity = TableEntries.Single( e => EntryKeysMatch( partitionKey, rowKey, e ) );
+
+         Dictionary<string, object> serializedData = entity.GetProperties().ToDictionary( kp => kp.Key, kp => kp.Value.Value );
          actualEntity.Value.Modify( callerInstanceId, serializedData );
       }
    }

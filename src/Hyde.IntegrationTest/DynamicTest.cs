@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
+using System.Dynamic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.StorageClient;
@@ -20,7 +20,6 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestInitialize]
       public void TestInitialize()
       {
-
          _tableStorageProvider = new AzureTableStorageProvider( _storageAccount );
 
          _tableName = _baseTableName + Guid.NewGuid().ToString().Replace( "-", string.Empty );
@@ -45,7 +44,25 @@ namespace TechSmith.Hyde.IntegrationTest
          }
       }
 
-      [TestMethod]
+      [TestMethod, TestCategory( "Integration" )]
+      public void Get_ObjectInsertedIsInheritsDynamicObject_RetrievedProperly()
+      {
+         dynamic item = new DynamicPropertyBag();
+         item.Foo = "test";
+         item.Bar = 1;
+
+         string partitionKey = "partitionKey";
+         string rowKey = "rowKey";
+         _tableStorageProvider.Add( _tableName, item, partitionKey, rowKey );
+         _tableStorageProvider.Save();
+
+         dynamic result = _tableStorageProvider.Get( _tableName, partitionKey, rowKey );
+
+         Assert.AreEqual( item.Foo, result.Foo );
+         Assert.AreEqual( item.Bar, result.Bar );
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
       public void Get_RetrievingObjectViaDynamic_ShouldHydrateEntityWithAllProperties()
       {
          var simpleEntity = new DecoratedItem
@@ -65,7 +82,7 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( simpleEntity.Name, retrievedObject.RowKey );
       }
 
-      [TestMethod]
+      [TestMethod, TestCategory( "Integration" )]
       public void GetRange_RetrievingObjectViaDynamic_ShouldHydrateEntitiesWithAllProperties()
       {
          Enumerable.Range( 0, 10 ).ToList().ForEach( i =>
@@ -85,6 +102,57 @@ namespace TechSmith.Hyde.IntegrationTest
 
          Assert.AreEqual( 5, result.Count() );
          Assert.AreEqual( 1, (int) result.First().Age );
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void Get_AddAndGetDynamic_DynamicIsReturnedWithAllProperties()
+      {
+         dynamic dyn = new ExpandoObject();
+
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
+
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+
+         Assert.AreEqual( "this is the first item.", result.FirstItem );
+         Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void UpsertDynamic_ItemDoesNotExist_DynamicIsInserted()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Upsert( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.AreEqual( "this is the first item.", result.FirstItem );
+         Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void UpsertDynamic_ItemExistsAndNeedsToBeUpdated_DynamicIsUpdated()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+         dyn.FirstItem = "this text is changed.";
+         _tableStorageProvider.Upsert( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.AreEqual( "this text is changed.", result.FirstItem );
+         Assert.AreEqual( 2, result.SecondItem );
       }
    }
 }

@@ -159,7 +159,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Add_EntityHasPartitionAndRowKeyAttributes_PartitionAndRowKeysSetCorrectly()
       {
-         var expected = new DecoratedItem { Id = "foo", Name = "bar" };
+         var expected = new DecoratedItem { Id = "foo", Name = "bar", Age = 1 };
          _tableStorageProvider.Add( _tableName, expected );
          _tableStorageProvider.Save();
 
@@ -201,6 +201,7 @@ namespace TechSmith.Hyde.Test
 
          var items = _tableStorageProvider.GetCollection<SimpleDataItem>( _tableName, _partitionKey );
 
+         Assert.IsFalse( items.Any() );
          Assert.IsFalse( items.Any() );
       }
 
@@ -909,7 +910,7 @@ namespace TechSmith.Hyde.Test
       {
          var item = new SimpleDataItem { FirstType = "a", SecondType = 1 };
 
-         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item, _partitionKey, "there" );
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, "there" );
          var result = _tableStorageProvider.GetRangeByRowKey<SimpleDataItem>( _tableName, _partitionKey, "hi", "hj" );
 
          Assert.AreEqual( 0, result.Count() );
@@ -920,7 +921,7 @@ namespace TechSmith.Hyde.Test
       {
          var item = new SimpleDataItem { FirstType = "a", SecondType = 1 };
 
-         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item, _partitionKey, "hithere" );
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, "hithere" );
          var result = _tableStorageProvider.GetRangeByRowKey<SimpleDataItem>( _tableName, _partitionKey, "hi", "hj" );
 
          Assert.AreEqual( 1, result.Count() );
@@ -934,10 +935,10 @@ namespace TechSmith.Hyde.Test
          var item3 = new SimpleDataItem { FirstType = "c", SecondType = 3 };
          var item4 = new SimpleDataItem { FirstType = "d", SecondType = 4 };
 
-         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item1, _partitionKey, "asdf" );
-         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item2, _partitionKey, "hithere" );
-         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item3, _partitionKey, "jklh" );
-         _tableStorageProvider.Add<SimpleDataItem>( _tableName, item4, _partitionKey, "hi" );
+         _tableStorageProvider.Add( _tableName, item1, _partitionKey, "asdf" );
+         _tableStorageProvider.Add( _tableName, item2, _partitionKey, "hithere" );
+         _tableStorageProvider.Add( _tableName, item3, _partitionKey, "jklh" );
+         _tableStorageProvider.Add( _tableName, item4, _partitionKey, "hi" );
 
          var result = _tableStorageProvider.GetRangeByRowKey<SimpleDataItem>( _tableName, _partitionKey, "hi", "hj" );
 

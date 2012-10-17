@@ -42,7 +42,7 @@ namespace TechSmith.Hyde.Table.Azure
          return hostName.Contains( "127.0.0.1" ) || hostName.Contains( "localhost" );
       }
 
-      public void AddNewItem<T>( string tableName, T itemToAdd, string partitionKey, string rowKey ) where T : new()
+      public void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
       {
          try
          {
@@ -205,17 +205,35 @@ namespace TechSmith.Hyde.Table.Azure
          }
       }
 
-      public void Upsert<T>( string tableName, T itemToUpsert, string partitionKey, string rowKey ) where T : new()
+      public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
       {
          if ( IsLocalDevRequest( BaseUri.Host ) )
          {
-            UpsertForDevStorage( tableName, itemToUpsert, partitionKey, rowKey );
+            UpsertDynamicForDevStorage( tableName, itemToUpsert, partitionKey, rowKey );
          }
          else
          {
             var genericToUpsert = GenericEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
             AttachTo( tableName, genericToUpsert );
             UpdateObject( genericToUpsert );
+         }
+      }
+
+      private void UpsertDynamicForDevStorage( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
+      {
+         try
+         {
+            var genericToUpsert = GenericEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
+            var genericInStorage = GetItemAsGenericEntity( tableName, partitionKey, rowKey );
+            if ( !genericToUpsert.AreTheseEqual( genericInStorage ) )
+            {
+               Detach( genericInStorage );
+               Update( tableName, itemToUpsert, partitionKey, rowKey );
+            }
+         }
+         catch ( EntityDoesNotExistException )
+         {
+            AddNewItem( tableName, itemToUpsert, partitionKey, rowKey );
          }
       }
 
@@ -280,7 +298,7 @@ namespace TechSmith.Hyde.Table.Azure
          }
       }
 
-      public void Update<T>( string tableName, T updatedItem, string partitionKey, string rowKey ) where T : new()
+      public void Update( string tableName, dynamic updatedItem, string partitionKey, string rowKey )
       {
          var genericToUpdate = GenericEntity.HydrateFrom( updatedItem, partitionKey, rowKey );
 

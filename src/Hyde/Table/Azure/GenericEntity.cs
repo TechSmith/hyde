@@ -113,31 +113,71 @@ namespace TechSmith.Hyde.Table.Azure
          return funcToCall( itemToConvert.Value.ToString() );
       }
 
-      public static GenericEntity HydrateFrom<T>( T sourceItem ) where T : new()
+      public static GenericEntity HydrateFrom( dynamic sourceItem )
       {
-         string partitionKey = sourceItem.ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         string rowKey = sourceItem.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
-
+         string partitionKey = ((object)sourceItem).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         string rowKey = ((object)sourceItem).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
          return HydrateFrom( sourceItem, partitionKey, rowKey );
       }
 
-      public static GenericEntity HydrateFrom<T>( T sourceItem, string partitionKey, string rowKey ) where T : new()
+      public static GenericEntity HydrateFrom( dynamic sourceItem, string partitionKey, string rowKey )
       {
+         Dictionary<string, EntityPropertyInfo> properties = GetProperties( sourceItem );
+
          var genericEntity = new GenericEntity();
-         foreach ( var property in sourceItem.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
+         if ( properties != null )
          {
-            if ( InvalidPropertyNames.Contains( property.Name ) )
+            foreach ( KeyValuePair<string, EntityPropertyInfo> keyValuePair in properties )
             {
-               throw new InvalidEntityException( string.Format( "Invalid property name {0}", property.Name ) );
+               if ( InvalidPropertyNames.Contains( keyValuePair.Key ) )
+               {
+                  throw new InvalidEntityException( string.Format( "Invalid property name {0}", keyValuePair.Key ) );
+               }
+               genericEntity[keyValuePair.Key] = keyValuePair.Value;
             }
-            var valueOfProperty = property.GetValue( sourceItem, null );
-            genericEntity[property.Name] = new EntityPropertyInfo( valueOfProperty, property.PropertyType, valueOfProperty == null );
          }
 
          genericEntity.PartitionKey = partitionKey;
          genericEntity.RowKey = rowKey;
 
          return genericEntity;
+      }
+
+      private static Dictionary<string, EntityPropertyInfo> GetProperties( dynamic item )
+      {
+         if ( item is IDynamicMetaObjectProvider )
+         {
+            return GetPropertiesFromDynamicMetaObject( item );
+         }
+         return GetPropertiesFromType( item );
+      }
+
+      private static Dictionary<string, EntityPropertyInfo>GetPropertiesFromDynamicMetaObject( IDynamicMetaObjectProvider item )
+      {
+         var properties = new Dictionary<string, EntityPropertyInfo>();
+         IEnumerable<string> memberNames = ImpromptuInterface.Impromptu.GetMemberNames( item );
+         foreach ( var memberName in memberNames )
+         {
+            dynamic result = ImpromptuInterface.Impromptu.InvokeGet( item, memberName );
+            Type objectType = result == null ? typeof(object) : result.GetType();
+            properties[memberName] = new EntityPropertyInfo( result, objectType, result == null );
+         }
+         return properties;
+      }
+
+      private static Dictionary<string, EntityPropertyInfo> GetPropertiesFromType<T>( T item )
+      {
+         var properties = new Dictionary<string, EntityPropertyInfo>();
+         foreach ( var property in item.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
+         {
+            if ( InvalidPropertyNames.Contains( property.Name ) )
+            {
+               throw new InvalidEntityException( string.Format( "Invalid property name {0}", property.Name ) );
+            }
+            var valueOfProperty = property.GetValue( item, null );
+            properties[property.Name] = new EntityPropertyInfo( valueOfProperty, property.PropertyType, valueOfProperty == null );
+         }
+         return properties;
       }
 
       public bool AreTheseEqual( GenericEntity rightSide )

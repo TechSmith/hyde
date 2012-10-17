@@ -11,3 +11,4 @@ TestResults
 *_Resharper*
 *.vsmdi
 *.ncrunchproject
+testimpactdata.sdf
