@@ -191,6 +191,31 @@ namespace TechSmith.Hyde.IntegrationTest
          }
       }
 
+      [DontSerialize]
+      public class SimpleTypeWithDontSerializeAttribute
+      {
+         public string StringWithoutDontSerializeAttribute
+         {
+            get; 
+            set;
+         }
+      }
+
+      public class SimpleClassContainingTypeWithDontSerializeAttribute
+      {
+         public SimpleTypeWithDontSerializeAttribute ThingWithDontSerializeAttribute
+         {
+            get; 
+            set;
+         }
+
+         public string StringWithoutDontSerializeAttribute
+         {
+            get; 
+            set; 
+         }
+      }
+
       private TableStorageProvider _tableStorageProvider;
 
       [TestInitialize]
@@ -928,7 +953,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      public void AddItemWithNotSerializedPropertyDoesntSerializeThatProperty()
+      public void Add_ItemWithNotSerializedProperty_DoesntSerializeThatProperty()
       {
          var newItem = new SimpleItemWithDontSerializeAttribute
          {
@@ -944,6 +969,28 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( resultItem.SerializedString, newItem.SerializedString );
          Assert.AreEqual( null, resultItem.NotSerializedString );
       }
+
+      [TestCategory( "Integration" ), TestMethod]
+      public void Add_ClassWithPropertyOfTypeThatHasDontSerializeAttribute_DoesNotSerializeThatProperty()
+      {
+         var newItem = new SimpleClassContainingTypeWithDontSerializeAttribute
+         {
+            StringWithoutDontSerializeAttribute = "You should see this",
+            ThingWithDontSerializeAttribute = new SimpleTypeWithDontSerializeAttribute
+                {
+                  StringWithoutDontSerializeAttribute = "You shouldn't see this"
+               }
+         };
+
+         _tableStorageProvider.Add( _tableName, newItem, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var resultItem = _tableStorageProvider.Get<SimpleClassContainingTypeWithDontSerializeAttribute>( _tableName, _partitionKey, _rowKey );
+
+         Assert.AreEqual( null, resultItem.ThingWithDontSerializeAttribute );
+         Assert.AreEqual( newItem.StringWithoutDontSerializeAttribute, resultItem.StringWithoutDontSerializeAttribute );
+      }
+
 
       public class SimpleDataItemWithDateTime
       {

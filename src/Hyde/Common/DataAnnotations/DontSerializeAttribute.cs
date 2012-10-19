@@ -3,7 +3,7 @@
 namespace TechSmith.Hyde.Common.DataAnnotations
 {
 
-   [AttributeUsage( AttributeTargets.Property )]
+   [AttributeUsage( AttributeTargets.Property | AttributeTargets.Class )]
    public class DontSerializeAttribute : Attribute
    {
    }

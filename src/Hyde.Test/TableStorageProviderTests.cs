@@ -663,7 +663,26 @@ namespace TechSmith.Hyde.Test
 
       }
 
+      [TestMethod]
+      public void Add_ClassWithPropertyOfTypeThatHasDontSerializeAttribute_DoesNotSerializeThatProperty()
+      {
+         var newItem = new SimpleClassContainingTypeWithDontSerializeAttribute
+         {
+            StringWithoutDontSerializeAttribute = "You should see this",
+            ThingWithDontSerializeAttribute = new SimpleTypeWithDontSerializeAttribute
+            {
+               StringWithoutDontSerializeAttribute = "You shouldn't see this"
+            }
+         };
 
+         _tableStorageProvider.Add( _tableName, newItem, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var resultItem = _tableStorageProvider.Get<SimpleClassContainingTypeWithDontSerializeAttribute>( _tableName, _partitionKey, _rowKey );
+
+         Assert.AreEqual( null, resultItem.ThingWithDontSerializeAttribute );
+         Assert.AreEqual( newItem.StringWithoutDontSerializeAttribute, resultItem.StringWithoutDontSerializeAttribute );
+      }
 
       [TestMethod]
       [ExpectedException( typeof( EntityDoesNotExistException ) )]

@@ -38,4 +38,29 @@ namespace TechSmith.Hyde.Test
       public string FirstType { get; set; }
       public int PropertyWithInternalGetter { internal get; set; }
    }
+
+   [DontSerialize]
+   public class SimpleTypeWithDontSerializeAttribute
+   {
+      public string StringWithoutDontSerializeAttribute
+      {
+         get;
+         set;
+      }
+   }
+
+   public class SimpleClassContainingTypeWithDontSerializeAttribute
+   {
+      public SimpleTypeWithDontSerializeAttribute ThingWithDontSerializeAttribute
+      {
+         get;
+         set;
+      }
+
+      public string StringWithoutDontSerializeAttribute
+      {
+         get;
+         set;
+      }
+   }
 }
