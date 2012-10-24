@@ -19,7 +19,7 @@ namespace TechSmith.Hyde.Common
          var objType = obj.GetType();
          var bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
          var props = objType.GetProperties( bindingFlags )
-                            .Where( p => p.GetCustomAttributes( attrType, inherit: true ).Length > 0 )
+                            .Where( p => Attribute.GetCustomAttributes( p, attrType, inherit: true ).Length > 0 )
                             .ToArray();
 
          if ( props.Length == 0 )
