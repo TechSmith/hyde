@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Data.Services.Client;
 using System.Linq;
 using System.Net;
-using Microsoft.WindowsAzure.StorageClient;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.RetryPolicies;
+using Microsoft.WindowsAzure.Storage.Table;
+using Microsoft.WindowsAzure.Storage.Table.DataServices;
 using TechSmith.Hyde.Common;
 
 namespace TechSmith.Hyde.Table.Azure
@@ -11,14 +14,19 @@ namespace TechSmith.Hyde.Table.Azure
    // Modified from Jai Haridas: http://social.msdn.microsoft.com/Forums/en-US/windowsazure/thread/481afa1b-03a9-42d9-ae79-9d5dc33b9297/
    internal class AzureTableContext : TableServiceContext, ITableContext
    {
+      internal IRetryPolicy RetryPolicy
+      {
+         get;
+         set;
+      }
       public AzureTableContext( ICloudStorageAccount provider )
-         : base( provider.TableEndpoint, provider.Credentials )
+         : base( new CloudTableClient( new Uri( provider.TableEndpoint ), provider.Credentials ) )
       {
          SendingRequest += SendingRequestWithNewVersion;
          ReadingEntity += AzureGenericTableReader.HandleReadingEntity;
          WritingEntity += AzureGenericTableWriter.HandleWritingEntity;
 
-         RetryPolicy = RetryPolicies.RetryExponential( 4, TimeSpan.FromSeconds( 1 ), TimeSpan.FromSeconds( 5 ), TimeSpan.FromSeconds( 1 ) );
+         RetryPolicy = new ExponentialRetry( TimeSpan.FromSeconds( 1 ), 4 );
       }
 
       private static void SendingRequestWithNewVersion( object sender, SendingRequestEventArgs e )
@@ -92,7 +100,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          // The object returned from AsTableServiceQuery doesn't play nicely with
          // LINQ; you'll get an exception if you call Select() on it.
-         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).AsTableServiceQuery() )
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).AsTableServiceQuery( this ) )
          {
             yield return entity.CreateInstanceFromProperties<T>();
          }
@@ -102,7 +110,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          // The object returned from AsTableServiceQuery doesn't play nicely with
          // LINQ; you'll get an exception if you call Select() on it.
-         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).AsTableServiceQuery() )
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).AsTableServiceQuery( this ) )
          {
             yield return entity.CreateInstanceFromProperties();
          }
@@ -112,7 +120,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          // The object returned from AsTableServiceQuery doesn't play nicely with
          // LINQ; you'll get an exception if you call Select() on it.
-         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).Where( p => p.PartitionKey == partitionKey ).AsTableServiceQuery() )
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).Where( p => p.PartitionKey == partitionKey ).AsTableServiceQuery( this ) )
          {
             yield return entity.CreateInstanceFromProperties<T>();
          }
@@ -122,7 +130,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          // The object returned from AsTableServiceQuery doesn't play nicely with
          // LINQ; you'll get an exception if you call Select() on it.
-         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).Where( p => p.PartitionKey == partitionKey ).AsTableServiceQuery() )
+         foreach ( var entity in CreateQuery<GenericEntity>( tableName ).Where( p => p.PartitionKey == partitionKey ).AsTableServiceQuery( this ) )
          {
             yield return entity.CreateInstanceFromProperties();
          }
@@ -139,7 +147,7 @@ namespace TechSmith.Hyde.Table.Azure
          foreach ( var entity in CreateQuery<GenericEntity>( tableName )
                                     .Where( p => p.PartitionKey.CompareTo( partitionKeyLow ) >= 0 &&
                                                  p.PartitionKey.CompareTo( partitionKeyHigh ) <= 0 )
-                                    .AsTableServiceQuery() )
+                                    .AsTableServiceQuery( this ) )
          {
 
             yield return entity.CreateInstanceFromProperties<T>();
@@ -151,7 +159,7 @@ namespace TechSmith.Hyde.Table.Azure
          foreach ( var entity in CreateQuery<GenericEntity>( tableName )
                                     .Where( p => p.PartitionKey.CompareTo( partitionKeyLow ) >= 0 &&
                                                  p.PartitionKey.CompareTo( partitionKeyHigh ) <= 0 )
-                                    .AsTableServiceQuery() )
+                                    .AsTableServiceQuery( this ) )
          {
 
             yield return entity.CreateInstanceFromProperties();
@@ -163,7 +171,7 @@ namespace TechSmith.Hyde.Table.Azure
          foreach ( var entity in CreateQuery<GenericEntity>( tableName )
                                     .Where( p => p.RowKey.CompareTo( rowKeyLow ) >= 0 &&
                                                  p.RowKey.CompareTo( rowKeyHigh ) <= 0 )
-                                    .AsTableServiceQuery() )
+                                    .AsTableServiceQuery( this ) )
          {
 
             yield return entity.CreateInstanceFromProperties<T>();
@@ -175,7 +183,7 @@ namespace TechSmith.Hyde.Table.Azure
          foreach ( var entity in CreateQuery<GenericEntity>( tableName )
                                     .Where( p => p.RowKey.CompareTo( rowKeyLow ) >= 0 &&
                                                  p.RowKey.CompareTo( rowKeyHigh ) <= 0 )
-                                    .AsTableServiceQuery() )
+                                    .AsTableServiceQuery( this ) )
          {
             yield return entity.CreateInstanceFromProperties();
          }
@@ -185,21 +193,17 @@ namespace TechSmith.Hyde.Table.Azure
       {
          try
          {
-            SaveChangesWithRetries( SaveChangesOptions.ReplaceOnUpdate );
+            SaveChangesWithRetries( SaveChangesOptions.ReplaceOnUpdate, new TableRequestOptions { RetryPolicy = RetryPolicy } );
          }
-         catch ( DataServiceRequestException ex )
+         catch ( StorageException ex )
          {
-            var innerException = ex.InnerException as DataServiceClientException;
-            if ( innerException != null )
+            if ( ex.Message == "EntityAlreadyExists" )
             {
-               if ( innerException.StatusCode == 404 )
-               {
-                  throw new EntityDoesNotExistException( "Entity did not exist when trying to update.", ex );
-               }
-               else if ( innerException.Message.Contains( "EntityAlreadyExists" ) )
-               {
-                  throw new EntityAlreadyExistsException( "Entity already exists", ex );
-               }
+               throw new EntityAlreadyExistsException( "Entity already exists", ex );
+            }
+            if ( ex.Message == "ResourceNotFound" )
+            {
+               throw new EntityDoesNotExistException( "Entity did not exist when trying to update.", ex );
             }
             throw;
          }
@@ -281,7 +285,7 @@ namespace TechSmith.Hyde.Table.Azure
          try
          {
             objectsToDelete = CreateQuery<GenericEntity>( tableName )
-               .Where( p => p.PartitionKey == partitionKey ).AsTableServiceQuery().ToArray();
+               .Where( p => p.PartitionKey == partitionKey ).AsTableServiceQuery( this ).ToArray();
          }
          catch ( DataServiceQueryException )
          {

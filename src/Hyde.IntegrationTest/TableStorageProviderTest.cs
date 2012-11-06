@@ -2,7 +2,9 @@
 using System.Configuration;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.WindowsAzure.StorageClient;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
+using Microsoft.WindowsAzure.Storage.Table;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
 using TechSmith.Hyde.Table;
@@ -19,7 +21,7 @@ namespace TechSmith.Hyde.IntegrationTest
       private static readonly string _baseTableName = "IntegrationTestTable";
       private string _tableName;
       private CloudTableClient _client;
-      private ConnectionStringCloudStorageAccount _storageAccount;
+      private ICloudStorageAccount _storageAccount;
 
       public class TypeWithStringProperty
       {
@@ -158,7 +160,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       public class TypeWithUnsupportedProperty
       {
-         public CloudBlob FirstType
+         public CloudBlockBlob FirstType
          {
             get;
             set;
@@ -196,7 +198,7 @@ namespace TechSmith.Hyde.IntegrationTest
       {
          public string StringWithoutDontSerializeAttribute
          {
-            get; 
+            get;
             set;
          }
       }
@@ -205,14 +207,14 @@ namespace TechSmith.Hyde.IntegrationTest
       {
          public SimpleTypeWithDontSerializeAttribute ThingWithDontSerializeAttribute
          {
-            get; 
+            get;
             set;
          }
 
          public string StringWithoutDontSerializeAttribute
          {
-            get; 
-            set; 
+            get;
+            set;
          }
       }
 
@@ -225,18 +227,19 @@ namespace TechSmith.Hyde.IntegrationTest
 
          _tableStorageProvider = new AzureTableStorageProvider( _storageAccount );
 
-         _client = new CloudTableClient( _storageAccount.TableEndpoint,
-                                         _storageAccount.Credentials );
+         _client = new CloudTableClient( new Uri( _storageAccount.TableEndpoint ), _storageAccount.Credentials );
 
          _tableName = _baseTableName + Guid.NewGuid().ToString().Replace( "-", string.Empty );
 
-         _client.CreateTable( _tableName );
+         var table = _client.GetTableReference( _tableName );
+         table.Create();
       }
 
       [TestCleanup]
       public void TestCleanup()
       {
-         _client.DeleteTableIfExist( _tableName );
+         var table = _client.GetTableReference( _tableName );
+         table.Delete();
       }
 
       [ClassCleanup]
@@ -244,20 +247,20 @@ namespace TechSmith.Hyde.IntegrationTest
       {
          var storageAccountProvider = new ConnectionStringCloudStorageAccount( ConfigurationManager.AppSettings["storageConnectionString"] );
 
-         var client = new CloudTableClient( storageAccountProvider.TableEndpoint,
-                                         storageAccountProvider.Credentials );
+         var client = new CloudTableClient( new Uri( storageAccountProvider.TableEndpoint ), storageAccountProvider.Credentials );
 
          var orphanedTables = client.ListTables( _baseTableName );
          foreach ( var orphanedTableName in orphanedTables )
          {
-            client.DeleteTableIfExist( orphanedTableName );
+            var table = client.GetTableReference( orphanedTableName.Name );
+            table.DeleteIfExists();
          }
       }
 
       [TestCategory( "Integration" ), TestMethod]
       public void Constructor_TableDoesntExist_TableIsCreated()
       {
-         Assert.IsTrue( _client.DoesTableExist( _tableName ) );
+         Assert.IsTrue( _client.GetTableReference( _tableName ).Exists() );
       }
 
       [TestCategory( "Integration" ), TestMethod]
@@ -413,9 +416,24 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" )]
       public void GetCollection_MultiplePartitions_ItemsFromAllPartitionsReturned()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "1", Name = "Jill", Age = 27 } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "2", Name = "Jim", Age = 32 } );
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "3", Name = "Jackie", Age = 12 } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "1",
+            Name = "Jill",
+            Age = 27
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "2",
+            Name = "Jim",
+            Age = 32
+         } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "3",
+            Name = "Jackie",
+            Age = 12
+         } );
          _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName );
@@ -779,11 +797,24 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
-      [ExpectedException( typeof( NotSupportedException ) )]
       public void AddingTypeWithUnsupportedProperty_NotSupportedExceptionThrown()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithUnsupportedProperty(), _partitionKey, _rowKey );
-         _tableStorageProvider.Save();
+
+         try
+         {
+            _tableStorageProvider.Save();
+            Assert.Fail( "Should have thrown StorageException with inner exception of NotSupportedException" );
+         }
+         catch ( StorageException ex )
+         {
+            if ( ex.InnerException.GetType() == typeof( NotSupportedException ) )
+            {
+               // this is the expected exception
+               return;
+            }
+            Assert.Fail( "Should have thrown StorageException with inner exception of NotSupportedException" );
+         }
       }
 
       [TestCategory( "Integration" ), TestMethod]
@@ -822,7 +853,12 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" ), TestMethod]
       public void Add_ItemHasPartitionAndRowKeyProperties_PartitionAndRowKeyAreCorrectlySaved()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "foo", Name = "bar", Age = 42 } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 42
+         } );
          _tableStorageProvider.Save();
 
          var item = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
@@ -834,13 +870,18 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" ), TestMethod]
       public void Add_ItemHasPartitionAndRowKeyProperties_PropertiesAreNotSavedTwiceInTableStorage()
       {
-         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "48823", Name = "Kovacs", Age = 142, } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem
+         {
+            Id = "48823",
+            Name = "Kovacs",
+            Age = 142,
+         } );
          _tableStorageProvider.Save();
 
-         var tableServiceContext = _client.GetDataServiceContext();
+         var tableServiceContext = _client.GetTableServiceContext();
          var item = ( from e in tableServiceContext.CreateQuery<DecoratedItemEntity>( _tableName )
                       where e.PartitionKey == "48823" && e.RowKey == "Kovacs"
-                      select e ).AsTableServiceQuery().First();
+                      select e ).First();
 
          Assert.IsNull( item.Id );
          Assert.IsNull( item.Name );
@@ -876,7 +917,10 @@ namespace TechSmith.Hyde.IntegrationTest
          _tableStorageProvider.Save();
 
          _tableStorageProvider = new AzureTableStorageProvider( _storageAccount );
-         itemToUpsert = new TypeWithStringProperty { FirstType = "second" };
+         itemToUpsert = new TypeWithStringProperty
+         {
+            FirstType = "second"
+         };
 
          _tableStorageProvider.Upsert( _tableName, itemToUpsert, _partitionKey, _rowKey );
          _tableStorageProvider.Save();
@@ -889,11 +933,21 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" ), TestMethod]
       public void Upsert_ItemExistsAndHasPartitionAndRowKeys_ItemIsUpdated()
       {
-         var item = new DecoratedItem { Id = "foo2", Name = "bar2", Age = 42 };
+         var item = new DecoratedItem
+         {
+            Id = "foo2",
+            Name = "bar2",
+            Age = 42
+         };
          _tableStorageProvider.Add( _tableName, item );
          _tableStorageProvider.Save();
 
-         var upsertedItem = new DecoratedItem { Id = "foo2", Name = "bar2", Age = 34 };
+         var upsertedItem = new DecoratedItem
+         {
+            Id = "foo2",
+            Name = "bar2",
+            Age = 34
+         };
          _tableStorageProvider.Upsert( _tableName, upsertedItem );
          _tableStorageProvider.Save();
 
@@ -923,11 +977,21 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestCategory( "Integration" ), TestMethod]
       public void Update_ItemExistsAndHasPartitionAndRowKeyProperties_ItemIsUpdated()
       {
-         var item = new DecoratedItem { Id = "foo", Name = "bar", Age = 42 };
+         var item = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 42
+         };
          _tableStorageProvider.Add( _tableName, item );
          _tableStorageProvider.Save();
 
-         var updatedItem = new DecoratedItem { Id = "foo", Name = "bar", Age = 34 };
+         var updatedItem = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 34
+         };
          _tableStorageProvider.Update( _tableName, updatedItem );
          _tableStorageProvider.Save();
 
@@ -978,8 +1042,8 @@ namespace TechSmith.Hyde.IntegrationTest
             StringWithoutDontSerializeAttribute = "You should see this",
             ThingWithDontSerializeAttribute = new SimpleTypeWithDontSerializeAttribute
                 {
-                  StringWithoutDontSerializeAttribute = "You shouldn't see this"
-               }
+                   StringWithoutDontSerializeAttribute = "You shouldn't see this"
+                }
          };
 
          _tableStorageProvider.Add( _tableName, newItem, _partitionKey, _rowKey );
@@ -1030,7 +1094,10 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestMethod, TestCategory( "Integration" )]
       public void GetRangeByRowKey_OneItemInStoreButDoesntMatchPredicate_EnumerableWithNoItemsReturned()
       {
-         var item = new TypeWithStringProperty { FirstType = "a" };
+         var item = new TypeWithStringProperty
+         {
+            FirstType = "a"
+         };
          _tableStorageProvider.Add( _tableName, item, _partitionKey, "there" );
          _tableStorageProvider.Save();
 
@@ -1042,7 +1109,10 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestMethod, TestCategory( "Integration" )]
       public void GetRangeByRowKey_OneItemInStore_EnumerableWithNoItemsReturned()
       {
-         var item = new TypeWithStringProperty { FirstType = "a" };
+         var item = new TypeWithStringProperty
+         {
+            FirstType = "a"
+         };
          _tableStorageProvider.Add( _tableName, item, _partitionKey, "hithere" );
          _tableStorageProvider.Save();
 
@@ -1054,10 +1124,22 @@ namespace TechSmith.Hyde.IntegrationTest
       [TestMethod, TestCategory( "Integration" )]
       public void GetRangeByRowKey_ManyItemsInStore_EnumerableWithAppropriateItemsReturned()
       {
-         var item1 = new TypeWithStringProperty { FirstType = "a" };
-         var item2 = new TypeWithStringProperty { FirstType = "b" };
-         var item3 = new TypeWithStringProperty { FirstType = "c" };
-         var item4 = new TypeWithStringProperty { FirstType = "d" };
+         var item1 = new TypeWithStringProperty
+         {
+            FirstType = "a"
+         };
+         var item2 = new TypeWithStringProperty
+         {
+            FirstType = "b"
+         };
+         var item3 = new TypeWithStringProperty
+         {
+            FirstType = "c"
+         };
+         var item4 = new TypeWithStringProperty
+         {
+            FirstType = "d"
+         };
 
          _tableStorageProvider.Add( _tableName, item1, _partitionKey, "asdf" );
          _tableStorageProvider.Add( _tableName, item2, _partitionKey, "hithere" );

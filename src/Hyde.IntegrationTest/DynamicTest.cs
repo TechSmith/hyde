@@ -3,7 +3,7 @@ using System.Configuration;
 using System.Dynamic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.WindowsAzure.StorageClient;
+using Microsoft.WindowsAzure.Storage.Table;
 using TechSmith.Hyde.Table;
 
 namespace TechSmith.Hyde.IntegrationTest
@@ -24,9 +24,9 @@ namespace TechSmith.Hyde.IntegrationTest
 
          _tableName = _baseTableName + Guid.NewGuid().ToString().Replace( "-", string.Empty );
 
-         var client = new CloudTableClient( _storageAccount.TableEndpoint,
+         var client = new CloudTableClient( new Uri( _storageAccount.TableEndpoint ),
                                          _storageAccount.Credentials );
-         client.CreateTable( _tableName );
+         client.GetTableReference( _tableName ).Create();
       }
 
       [ClassCleanup]
@@ -34,13 +34,13 @@ namespace TechSmith.Hyde.IntegrationTest
       {
          var storageAccountProvider = new ConnectionStringCloudStorageAccount( ConfigurationManager.AppSettings["storageConnectionString"] );
 
-         var client = new CloudTableClient( storageAccountProvider.TableEndpoint,
+         var client = new CloudTableClient( new Uri( storageAccountProvider.TableEndpoint ),
                                          storageAccountProvider.Credentials );
 
          var orphanedTables = client.ListTables( _baseTableName );
          foreach ( var orphanedTableName in orphanedTables )
          {
-            client.DeleteTableIfExist( orphanedTableName );
+            client.GetTableReference( orphanedTableName.Name ).DeleteIfExists();
          }
       }
 

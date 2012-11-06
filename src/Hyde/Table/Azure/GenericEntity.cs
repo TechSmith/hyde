@@ -1,15 +1,18 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Services.Common;
 using System.Dynamic;
 using System.Globalization;
 using System.Linq;
+using Microsoft.WindowsAzure.Storage.Table.DataServices;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
 
 namespace TechSmith.Hyde.Table.Azure
 {
    // Modified from Jai Haridas: http://social.msdn.microsoft.com/Forums/en-US/windowsazure/thread/481afa1b-03a9-42d9-ae79-9d5dc33b9297/
-   internal class GenericEntity : Microsoft.WindowsAzure.StorageClient.TableServiceEntity
+   [DataServiceEntity]
+   internal class GenericEntity : TableServiceEntity
    {
       private static readonly HashSet<string> InvalidPropertyNames = new HashSet<string>
                                                                      {
@@ -115,8 +118,8 @@ namespace TechSmith.Hyde.Table.Azure
 
       public static GenericEntity HydrateFrom( dynamic sourceItem )
       {
-         string partitionKey = ((object)sourceItem).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         string rowKey = ((object)sourceItem).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
+         string partitionKey = ( (object) sourceItem ).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
+         string rowKey = ( (object) sourceItem ).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
          return HydrateFrom( sourceItem, partitionKey, rowKey );
       }
 
@@ -152,14 +155,14 @@ namespace TechSmith.Hyde.Table.Azure
          return GetPropertiesFromType( item );
       }
 
-      private static Dictionary<string, EntityPropertyInfo>GetPropertiesFromDynamicMetaObject( IDynamicMetaObjectProvider item )
+      private static Dictionary<string, EntityPropertyInfo> GetPropertiesFromDynamicMetaObject( IDynamicMetaObjectProvider item )
       {
          var properties = new Dictionary<string, EntityPropertyInfo>();
          IEnumerable<string> memberNames = ImpromptuInterface.Impromptu.GetMemberNames( item );
          foreach ( var memberName in memberNames )
          {
             dynamic result = ImpromptuInterface.Impromptu.InvokeGet( item, memberName );
-            Type objectType = result == null ? typeof(object) : result.GetType();
+            Type objectType = result == null ? typeof( object ) : result.GetType();
             properties[memberName] = new EntityPropertyInfo( result, objectType, result == null );
          }
          return properties;

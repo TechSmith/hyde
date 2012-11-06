@@ -1,4 +1,5 @@
-﻿using Microsoft.WindowsAzure;
+﻿using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Auth;
 
 namespace TechSmith.Hyde
 {

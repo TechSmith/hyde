@@ -28,7 +28,7 @@ namespace TechSmith.Hyde.IntegrationTest
       }
    }
 
-   class DecoratedItemEntity : Microsoft.WindowsAzure.StorageClient.TableServiceEntity
+   class DecoratedItemEntity : Microsoft.WindowsAzure.Storage.Table.TableEntity
    {
       public string Id
       {
