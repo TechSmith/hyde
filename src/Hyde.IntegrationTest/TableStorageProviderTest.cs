@@ -2,7 +2,6 @@
 using System.Configuration;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Table;
 using TechSmith.Hyde.Common;
@@ -797,24 +796,12 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
+      [ExpectedException( typeof( NotSupportedException ) )]
       public void AddingTypeWithUnsupportedProperty_NotSupportedExceptionThrown()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithUnsupportedProperty(), _partitionKey, _rowKey );
 
-         try
-         {
-            _tableStorageProvider.Save();
-            Assert.Fail( "Should have thrown StorageException with inner exception of NotSupportedException" );
-         }
-         catch ( StorageException ex )
-         {
-            if ( ex.InnerException.GetType() == typeof( NotSupportedException ) )
-            {
-               // this is the expected exception
-               return;
-            }
-            Assert.Fail( "Should have thrown StorageException with inner exception of NotSupportedException" );
-         }
+         _tableStorageProvider.Save();
       }
 
       [TestCategory( "Integration" ), TestMethod]
@@ -1150,6 +1137,38 @@ namespace TechSmith.Hyde.IntegrationTest
          var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "hi", "hj" );
 
          Assert.AreEqual( 2, result.Count() );
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      public void Update_ThreeSeparateUpdatesOfSameElement_ShouldSucceed()
+      {
+         var item = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 42
+         };
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var updatedItem = new DecoratedItem
+         {
+            Id = "foo",
+            Name = "bar",
+            Age = 34
+         };
+         _tableStorageProvider.Update( _tableName, updatedItem );
+
+         updatedItem.Age = 11;
+         _tableStorageProvider.Update( _tableName, updatedItem );
+
+         updatedItem.Age = 22;
+         _tableStorageProvider.Update( _tableName, updatedItem );
+
+         _tableStorageProvider.Save();
+
+         updatedItem = _tableStorageProvider.Get<DecoratedItem>( _tableName, "foo", "bar" );
+         Assert.AreEqual( 22, updatedItem.Age );
       }
 
       private void EnsureOneItemInTableStorage()

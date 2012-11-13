@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.WindowsAzure.Storage.Table;
 
 namespace TechSmith.Hyde.Table.Memory
 {
    internal class MemoryTableEntry
    {
-      private Dictionary<string, object> _entryProperties;
+      private IDictionary<string, EntityProperty> _entryProperties;
 
-      private readonly Dictionary<Guid, Dictionary<string, object>> _tempEntryProperties;
+      private readonly Dictionary<Guid, IDictionary<string, EntityProperty>> _tempEntryProperties;
 
       public bool IsDeleted
       {
@@ -21,10 +22,10 @@ namespace TechSmith.Hyde.Table.Memory
          private set;
       }
 
-      public MemoryTableEntry( Dictionary<string, object> properties, Guid creatorId )
+      public MemoryTableEntry( IDictionary<string, EntityProperty> properties, Guid creatorId )
       {
-         _entryProperties = new Dictionary<string, object>();
-         _tempEntryProperties = new Dictionary<Guid, Dictionary<string, object>>
+         _entryProperties = new Dictionary<string, EntityProperty>();
+         _tempEntryProperties = new Dictionary<Guid, IDictionary<string, EntityProperty>>
                                 {
                                    {
                                       creatorId, properties
@@ -36,7 +37,7 @@ namespace TechSmith.Hyde.Table.Memory
          IsDeleted = false;
       }
 
-      public Dictionary<string, object> EntryProperties( Guid callerInstanceId )
+      public IDictionary<string, EntityProperty> EntryProperties( Guid callerInstanceId )
       {
          if ( _tempEntryProperties.ContainsKey( callerInstanceId ) )
          {
@@ -45,7 +46,7 @@ namespace TechSmith.Hyde.Table.Memory
          return _entryProperties;
       }
 
-      public void Modify( Guid instanceId, Dictionary<string, object> serializedData )
+      public void Modify( Guid instanceId, IDictionary<string, EntityProperty> serializedData )
       {
          _tempEntryProperties.Add( instanceId, serializedData );
       }

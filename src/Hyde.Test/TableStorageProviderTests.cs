@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Services.Client;
+using System.Globalization;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde.Common;
@@ -191,7 +192,7 @@ namespace TechSmith.Hyde.Test
          {
             var dataItem = new SimpleDataItem();
 
-            _tableStorageProvider.Add( _tableName, dataItem, _partitionKey, _rowKey + i.ToString() );
+            _tableStorageProvider.Add( _tableName, dataItem, _partitionKey, _rowKey + i.ToString( CultureInfo.InvariantCulture ) );
             _tableStorageProvider.Save();
          }
 
@@ -201,7 +202,6 @@ namespace TechSmith.Hyde.Test
 
          var items = _tableStorageProvider.GetCollection<SimpleDataItem>( _tableName, _partitionKey );
 
-         Assert.IsFalse( items.Any() );
          Assert.IsFalse( items.Any() );
       }
 
@@ -580,13 +580,13 @@ namespace TechSmith.Hyde.Test
 
          _tableStorageProvider.Add( _tableName, new SimpleDataItem
                                          {
-                                            FirstType = expectedValue,
+                                            UriTypeProperty = expectedValue,
                                          }, _partitionKey, _rowKey );
          _tableStorageProvider.Save();
 
          var value = _tableStorageProvider.Get<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
 
-         Assert.AreEqual( expectedValue, value.FirstType );
+         Assert.AreEqual( expectedValue, value.UriTypeProperty );
       }
 
       [TestMethod]
@@ -994,7 +994,7 @@ namespace TechSmith.Hyde.Test
          _tableStorageProvider.Add( _tableName, dataItem3, _partitionKey, "1" );
          _tableStorageProvider.Add( _tableName, dataItem4, _partitionKey, "4" );
 
-         var listOfItems = _tableStorageProvider.GetCollection<SimpleDataItem>( _tableName, _partitionKey );
+         var listOfItems = _tableStorageProvider.GetCollection<SimpleDataItem>( _tableName, _partitionKey ).ToArray();
 
          Assert.IsTrue( dataItem3.ComesBefore( listOfItems, dataItem1 ), "Making sure item 3 comes before item 1." );
          Assert.IsTrue( dataItem3.ComesBefore( listOfItems, dataItem2 ), "Making sure item 3 comes before item 2." );

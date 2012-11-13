@@ -1,15 +1,21 @@
+using System;
 using TechSmith.Hyde.Common.DataAnnotations;
 
 namespace TechSmith.Hyde.Test
 {
    public class SimpleDataItem
    {
-      public object FirstType
+      public string FirstType
       {
          get;
          set;
       }
-      public object SecondType
+      public int SecondType
+      {
+         get;
+         set;
+      }
+      public Uri UriTypeProperty
       {
          get;
          set;

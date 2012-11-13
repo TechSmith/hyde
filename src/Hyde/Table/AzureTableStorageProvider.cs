@@ -43,7 +43,7 @@ namespace TechSmith.Hyde.Table
 
       protected override ITableContext GetContext()
       {
-         return new AzureTableContext( _cloudStorageAccount );
+         return new AzureTableEntityTableContext( _cloudStorageAccount );
       }
    }
 }

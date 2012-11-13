@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using TechSmith.Hyde.Common;
-using TechSmith.Hyde.Common.DataAnnotations;
 using TechSmith.Hyde.Table.Azure;
 
 namespace TechSmith.Hyde.Table.Memory
@@ -42,96 +40,73 @@ namespace TechSmith.Hyde.Table.Memory
             throw new EntityAlreadyExistsException();
          }
 
-         GenericEntity dataToStore = GenericEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
+         GenericTableEntity dataToStore = GenericTableEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
 
          table.Add( partitionKey, rowKey, _instanceId, dataToStore );
       }
 
       public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
       {
-         var tableEntry = GetTable( tableName ).Where( partitionKey, rowKey, _instanceId ).FirstOrDefault().Value;
+         var tableEntry = GetTable( tableName ).Where( partitionKey, rowKey, _instanceId ).FirstOrDefault();
 
-         if ( tableEntry == null )
+         if ( tableEntry.Value == null )
          {
             throw new EntityDoesNotExistException();
          }
 
-         return HydrateItemFromData<T>( tableEntry.EntryProperties( _instanceId ), partitionKey, rowKey );
+         return ConvertTableEntryTo<T>( tableEntry );
       }
 
       public dynamic GetItem( string tableName, string partitionKey, string rowKey )
       {
-         var tableEntry = GetTable( tableName ).Where( partitionKey, rowKey, _instanceId ).FirstOrDefault().Value;
+         var tableEntry = GetTable( tableName ).Where( partitionKey, rowKey, _instanceId ).FirstOrDefault();
 
-         if ( tableEntry == null )
+         if ( tableEntry.Value == null )
          {
             throw new EntityDoesNotExistException();
          }
 
-         return HydrateItemFromData( tableEntry.EntryProperties( _instanceId ), partitionKey, rowKey );
-      }
-
-      private static dynamic HydrateItemFromData( Dictionary<string, object> dataForItem, string partitionKey, string rowKey )
-      {
-         dynamic result = new ExpandoObject();
-         foreach ( var property in dataForItem )
-         {
-            ( (IDictionary<string, object>) result ).Add( property.Key, property.Value );
-         }
-         result.PartitionKey = partitionKey;
-         result.RowKey = rowKey;
-
-         return result;
-      }
-
-
-      private static T HydrateItemFromData<T>( Dictionary<string, object> dataForItem, string partitionKey, string rowKey ) where T : new()
-      {
-         var result = new T();
-         var typeToHydrate = result.GetType();
-
-         var partitionKeyProperty = result.FindPropertyDecoratedWith<PartitionKeyAttribute>();
-         if ( partitionKeyProperty != null )
-         {
-            partitionKeyProperty.SetValue( result, partitionKey, null );
-         }
-
-         var rowKeyProperty = result.FindPropertyDecoratedWith<RowKeyAttribute>();
-         if ( rowKeyProperty != null )
-         {
-            rowKeyProperty.SetValue( result, rowKey, null );
-         }
-
-         foreach ( var key in dataForItem.Keys )
-         {
-            typeToHydrate.GetProperty( key ).SetValue( result, dataForItem[key], null );
-         }
-
-         // TODO: Play with IgnoreMissingProperties == false here... In other words, get mad if properties are missing.
-
-         return result;
+         return ConvertTableEntryToDynamic( tableEntry );
       }
 
       public IEnumerable<T> GetCollection<T>( string tableName ) where T : new()
       {
-         return GetTable( tableName ).TableEntries.Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ), v.Key.PartitionKey, v.Key.RowKey ) );
+         return GetTable( tableName ).TableEntries.Select( ConvertTableEntryTo<T> );
+      }
+
+      private T ConvertTableEntryTo<T>( KeyValuePair<TableServiceEntity, MemoryTableEntry> v ) where T : new()
+      {
+         var genericEntity = new GenericTableEntity
+                             {
+                                PartitionKey = v.Key.PartitionKey, RowKey = v.Key.RowKey
+                             };
+         genericEntity.ReadEntity( v.Value.EntryProperties( _instanceId ), null );
+         return genericEntity.ConvertTo<T>();
+      }
+
+      private dynamic ConvertTableEntryToDynamic( KeyValuePair<TableServiceEntity, MemoryTableEntry> tableEntry )
+      {
+         var genericEntity = new GenericTableEntity
+                             {
+                                PartitionKey = tableEntry.Key.PartitionKey, RowKey = tableEntry.Key.RowKey
+                             };
+         genericEntity.ReadEntity( tableEntry.Value.EntryProperties( _instanceId ), null );
+         return genericEntity.ConvertToDynamic();
       }
 
       public IEnumerable<dynamic> GetCollection( string tableName )
       {
-         return GetTable( tableName ).TableEntries.Select( v => HydrateItemFromData( v.Value.EntryProperties( _instanceId ), v.Key.PartitionKey, v.Key.RowKey ) );
+         return GetTable( tableName ).TableEntries.Select( ConvertTableEntryToDynamic );
       }
 
       public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
-         return GetTable( tableName ).Where( partitionKey, _instanceId )
-                   .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ), v.Key.PartitionKey, v.Key.RowKey ) );
+         return GetTable( tableName ).Where( partitionKey, _instanceId ).Select( ConvertTableEntryTo<T> );
       }
 
       public IEnumerable<dynamic> GetCollection( string tableName, string partitionKey )
       {
-         return GetTable( tableName ).Where( partitionKey, _instanceId )
-                   .Select( v => HydrateItemFromData( v.Value.EntryProperties( _instanceId ), v.Key.PartitionKey, v.Key.RowKey ) );
+         return GetTable( tableName ).Where( partitionKey, _instanceId ) .Select( ConvertTableEntryToDynamic );
       }
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
@@ -143,25 +118,22 @@ namespace TechSmith.Hyde.Table.Memory
       public IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
          return GetTable( tableName ).WhereRangeByPartitionKey( partitionKeyLow, partitionKeyHigh, _instanceId )
-                   .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ), v.Key.PartitionKey, v.Key.RowKey ) );
+                   .Select( ConvertTableEntryTo<T> );
       }
 
       public IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
       {
-         return GetTable( tableName ).WhereRangeByPartitionKey( partitionKeyLow, partitionKeyHigh, _instanceId )
-                   .Select( v => HydrateItemFromData( v.Value.EntryProperties( _instanceId ), v.Key.PartitionKey, v.Key.RowKey ) );
+         return GetTable( tableName ).WhereRangeByPartitionKey( partitionKeyLow, partitionKeyHigh, _instanceId ).Select( ConvertTableEntryToDynamic );
       }
 
       public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
       {
-         return GetTable( tableName ).WhereRangeByRowKey( partitionKey, rowKeyLow, rowKeyHigh, _instanceId )
-                   .Select( v => HydrateItemFromData<T>( v.Value.EntryProperties( _instanceId ), v.Key.PartitionKey, v.Key.RowKey ) );
+         return GetTable( tableName ).WhereRangeByRowKey( partitionKey, rowKeyLow, rowKeyHigh, _instanceId ).Select( ConvertTableEntryTo<T> );
       }
 
       public IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
       {
-         return GetTable( tableName ).WhereRangeByRowKey( partitionKey, rowKeyLow, rowKeyHigh, _instanceId )
-                   .Select( v => HydrateItemFromData( v.Value.EntryProperties( _instanceId ), v.Key.PartitionKey, v.Key.RowKey ) );
+         return GetTable( tableName ).WhereRangeByRowKey( partitionKey, rowKeyLow, rowKeyHigh, _instanceId ).Select( ConvertTableEntryToDynamic );
       }
 
       public void Save()
@@ -199,7 +171,7 @@ namespace TechSmith.Hyde.Table.Memory
 
          if ( table.HasEntity( partitionKey, rowKey ) )
          {
-            GenericEntity dataToStore = GenericEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
+            GenericTableEntity dataToStore = GenericTableEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
             table.Update( partitionKey, rowKey, _instanceId, dataToStore );
          }
          else

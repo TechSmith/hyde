@@ -73,22 +73,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Table\Azure\AzureGenericTableReader.cs" />
-    <Compile Include="Table\Azure\AzureGenericTableWriter.cs" />
     <Compile Include="Table\Azure\AzureKeyValidator.cs" />
-    <Compile Include="Table\Azure\AzureNamespaceProvider.cs" />
     <Compile Include="Table\AzureTableStorageProvider.cs" />
     <Compile Include="CloudStorageAccountAdapter.cs" />
     <Compile Include="Common\DataAnnotations\DontSerializeAttribute.cs" />
     <Compile Include="Common\EntityAlreadyExistsException.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Common\InvalidEntityException.cs" />
+    <Compile Include="Table\Azure\AzureTableEntityTableContext.cs" />
     <Compile Include="Table\Azure\EntityPropertyInfo.cs" />
-    <Compile Include="Table\Azure\AzureTableContext.cs" />
     <Compile Include="ConnectionStringCloudStorageAccount.cs" />
     <Compile Include="Common\EntityDoesNotExistExceptions.cs" />
-    <Compile Include="Table\Azure\GenericEntity.cs" />
+    <Compile Include="Table\Azure\ExecutableTableOperation.cs" />
     <Compile Include="ICloudStorageAccount.cs" />
+    <Compile Include="Table\Azure\GenericTableEntity.cs" />
     <Compile Include="Table\InMemoryTableStorageProvider.cs" />
     <Compile Include="Table\ITableContext.cs" />
     <Compile Include="Table\Memory\MemoryTable.cs" />
