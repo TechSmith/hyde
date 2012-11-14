@@ -139,8 +139,13 @@ namespace TechSmith.Hyde.Test
          };
 
          string rowKey = "rowkey";
+
          _tableStorageProvider.Add( _tableName, item, _partitionKey, rowKey );
+         _tableStorageProvider.Save();
+
+
          _tableStorageProvider.Add( _tableName, item, _partitionKey, rowKey );
+         _tableStorageProvider.Save();
       }
 
       [TestMethod]

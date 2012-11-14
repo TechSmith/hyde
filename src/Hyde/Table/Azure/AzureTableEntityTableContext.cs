@@ -12,7 +12,7 @@ namespace TechSmith.Hyde.Table.Azure
    internal class AzureTableEntityTableContext : ITableContext
    {
       private readonly ICloudStorageAccount _storageAccount;
-      private Queue<ExecutableTableOperation> _operations = new Queue<ExecutableTableOperation>();
+      private readonly Queue<ExecutableTableOperation> _operations = new Queue<ExecutableTableOperation>();
       private readonly TableRequestOptions _retriableTableRequest = new TableRequestOptions
       {
          RetryPolicy = new ExponentialRetry( TimeSpan.FromSeconds( 1 ), 4 )

@@ -12,6 +12,7 @@ namespace TechSmith.Hyde.Table.Memory
       public static ConcurrentDictionary<string, MemoryTable> _memoryTables = new ConcurrentDictionary<string, MemoryTable>();
 
       private readonly Guid _instanceId = Guid.NewGuid();
+      private Exception _exceptionToThrow;
 
       public static void ClearTables()
       {
@@ -30,6 +31,11 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
       {
+         if ( PendingSaveExceptionExists() )
+         {
+            return;
+         }
+
          AzureKeyValidator.ValidatePartitionKey( partitionKey );
          AzureKeyValidator.ValidateRowKey( rowKey );
 
@@ -37,7 +43,8 @@ namespace TechSmith.Hyde.Table.Memory
 
          if ( table.HasEntity( partitionKey, rowKey ) )
          {
-            throw new EntityAlreadyExistsException();
+            _exceptionToThrow = new EntityAlreadyExistsException();
+            return;
          }
 
          GenericTableEntity dataToStore = GenericTableEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
@@ -106,7 +113,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public IEnumerable<dynamic> GetCollection( string tableName, string partitionKey )
       {
-         return GetTable( tableName ).Where( partitionKey, _instanceId ) .Select( ConvertTableEntryToDynamic );
+         return GetTable( tableName ).Where( partitionKey, _instanceId ).Select( ConvertTableEntryToDynamic );
       }
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
@@ -138,6 +145,11 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Save()
       {
+         if ( PendingSaveExceptionExists() )
+         {
+            throw _exceptionToThrow;
+         }
+
          foreach ( KeyValuePair<string, MemoryTable> table in _memoryTables )
          {
             foreach ( KeyValuePair<TableServiceEntity, MemoryTableEntry> memoryTableEntry in table.Value.TableEntries.ToArray() )
@@ -167,6 +179,10 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
       {
+         if ( PendingSaveExceptionExists() )
+         {
+            return;
+         }
          var table = GetTable( tableName );
 
          if ( table.HasEntity( partitionKey, rowKey ) )
@@ -208,9 +224,26 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
       {
-         GetItem( tableName, partitionKey, rowKey );
+         if ( PendingSaveExceptionExists() )
+         {
+            return;
+         }
+
+         try
+         {
+            GetItem( tableName, partitionKey, rowKey );
+         }
+         catch ( EntityDoesNotExistException )
+         {
+            _exceptionToThrow = new EntityDoesNotExistException();
+         }
 
          Upsert( tableName, item, partitionKey, rowKey );
+      }
+
+      private bool PendingSaveExceptionExists()
+      {
+         return _exceptionToThrow != null;
       }
    }
 }

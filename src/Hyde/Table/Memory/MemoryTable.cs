@@ -22,7 +22,7 @@ namespace TechSmith.Hyde.Table.Memory
 
       public void Add( string partitionKey, string rowKey, Guid callerInstanceId, GenericTableEntity entity )
       {
-         IDictionary<string, EntityProperty> properties = entity.WriteEntity(null);
+         IDictionary<string, EntityProperty> properties = entity.WriteEntity( null );
 
          var tableServiceEntity = new TableServiceEntity( partitionKey, rowKey );
 
@@ -75,7 +75,7 @@ namespace TechSmith.Hyde.Table.Memory
 
          var actualEntity = TableEntries.Single( e => EntryKeysMatch( partitionKey, rowKey, e ) );
 
-         IDictionary<string, EntityProperty> serializedData = entity.WriteEntity( null ) ;
+         IDictionary<string, EntityProperty> serializedData = entity.WriteEntity( null );
          actualEntity.Value.Modify( callerInstanceId, serializedData );
       }
    }

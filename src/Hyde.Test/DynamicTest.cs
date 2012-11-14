@@ -161,6 +161,7 @@ namespace TechSmith.Hyde.Test
          dyn.SecondItem = 2;
 
          _tableStorageProvider.Update( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
 
          Assert.Fail( "Should have thrown EntityDoesNotExistException" );
       }
