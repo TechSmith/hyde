@@ -178,6 +178,13 @@ namespace TechSmith.Hyde.Table.Azure
                }
 
                _operations.Clear();
+               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest && 
+                    operation.OperationType == TableOperationType.Delete &&
+                    ex.RequestInformation.ExtendedErrorInformation.ErrorCode == "OutOfRangeInput" )
+               {
+                  // The table does not exist.
+                  continue;
+               }
 
                if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict )
                {

@@ -1171,6 +1171,35 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.AreEqual( 22, updatedItem.Age );
       }
 
+      [TestMethod]
+      public void Save_MultipleOperationsOnSameTable_OperationsExecutedInOrder()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "one" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
+         _tableStorageProvider.Save();
+
+         // We can tell the last operation was executed last by
+         // setting it up to fail and then verifying that the other two completed.
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "one", Age = 42 } );
+         _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
+
+         try
+         {
+            _tableStorageProvider.Save();
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( EntityAlreadyExistsException )
+         {
+         }
+
+         var results = _tableStorageProvider.GetCollection<DecoratedItem>( _tableName, "123" ).ToList();
+         Assert.AreEqual( 2, results.Count() );
+         Assert.AreEqual( 42, _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "one" ).Age );
+         Assert.IsFalse( results.Any( i => i.Name == "three" ) );
+      }
+
       private void EnsureOneItemInTableStorage()
       {
          var item = new TypeWithStringProperty

@@ -10,7 +10,6 @@ namespace TechSmith.Hyde.Table
    {
       private readonly Dictionary<string, ITableContext> _tableNameToContext = new Dictionary<string, ITableContext>();
       private readonly object _syncObject = new object();
-      private readonly List<ITableContext> _contextsToSave = new List<ITableContext>();
 
       protected abstract ITableContext GetContext();
 
@@ -140,18 +139,12 @@ namespace TechSmith.Hyde.Table
          {
             tableContext.Value.Save();
          }
-
-         foreach ( var tableContext in _contextsToSave )
-         {
-            tableContext.Save();
-         }
       }
 
       public void Upsert( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
-         var context = GetContext();
+         var context = GetContext( tableName );
          context.Upsert( tableName, instance, partitionKey, rowKey );
-         _contextsToSave.Add( context );
       }
 
       public void Upsert( string tableName, dynamic instance )
@@ -184,9 +177,8 @@ namespace TechSmith.Hyde.Table
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
       {
-         var context = GetContext();
+         var context = GetContext( tableName );
          context.Update( tableName, item, partitionKey, rowKey );
-         _contextsToSave.Add( context );
       }
 
       public void Update( string tableName, dynamic item )
