@@ -53,22 +53,6 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public void Add_ItemIsAddedAndNotSaved_SameContextCanReadUnsavedItem()
-      {
-         var expectedItem = new SimpleDataItem
-         {
-            FirstType = "a",
-            SecondType = 1
-         };
-         _tableStorageProvider.Add( _tableName, expectedItem, _partitionKey, _rowKey );
-
-         var item = _tableStorageProvider.Get<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
-
-         Assert.AreEqual( expectedItem.FirstType, item.FirstType );
-         Assert.AreEqual( expectedItem.SecondType, item.SecondType );
-      }
-
-      [TestMethod]
       [ExpectedException( typeof( DataServiceRequestException ) )]
       public void Add_ItemWithPartitionKeyThatContainsInvalidCharacters_ThrowsDataServiceRequestException()
       {
@@ -234,6 +218,8 @@ namespace TechSmith.Hyde.Test
          _tableStorageProvider.Delete( _tableName, _partitionKey, _rowKey );
          _tableStorageProvider.Save();
 
+         secondTableStorageProvider.Save();
+
          var instance = secondTableStorageProvider.Get<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
          Assert.IsNotNull( instance );
       }
@@ -249,7 +235,9 @@ namespace TechSmith.Hyde.Test
          var secondTableStorageProvider = new InMemoryTableStorageProvider();
 
          firstTableStorageProvider.Delete( _tableName, _partitionKey, _rowKey );
+         firstTableStorageProvider.Save();
          secondTableStorageProvider.Delete( _tableName, _partitionKey, _rowKey );
+         secondTableStorageProvider.Save();
 
 
          bool instanceOneExisted = false;
@@ -300,6 +288,7 @@ namespace TechSmith.Hyde.Test
             SecondType = 1
          };
          _tableStorageProvider.Add( _tableName, dataItem, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
 
          Assert.AreEqual( dataItem.FirstType, _tableStorageProvider.Get<SimpleDataItem>( _tableName, _partitionKey, _rowKey ).FirstType );
          Assert.AreEqual( dataItem.SecondType, _tableStorageProvider.Get<SimpleDataItem>( _tableName, _partitionKey, _rowKey ).SecondType );
@@ -330,6 +319,7 @@ namespace TechSmith.Hyde.Test
                                       FirstType = "c",
                                       SecondType = 3
                                    }, _partitionKey, "c" );
+         _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.Get<SimpleDataItem>( _tableName, _partitionKey, "b" );
 
@@ -401,6 +391,7 @@ namespace TechSmith.Hyde.Test
                               };
 
          firstContext.Add( _tableName, expectedItem, _partitionKey, _rowKey );
+         firstContext.Save();
 
          new InMemoryTableStorageProvider();
 
@@ -433,21 +424,6 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public void GetCollection_ItemInAnotherInstance_EnumerableWithNoItemsReturned()
-      {
-         _tableStorageProvider.Add( _tableName, new SimpleDataItem
-         {
-            FirstType = "a",
-            SecondType = 1
-         }, _partitionKey, _rowKey );
-         var secondStorageProvider = new InMemoryTableStorageProvider();
-
-         var result = secondStorageProvider.GetCollection<SimpleDataItem>( _tableName, _partitionKey );
-
-         Assert.AreEqual( 0, result.Count() );
-      }
-
-      [TestMethod]
       public void GetRangeByPartitionKey_ZeroItemsInStore_EnumerableWithNoItemsReturned()
       {
          var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, _partitionKey, _partitionKey );
@@ -463,6 +439,7 @@ namespace TechSmith.Hyde.Test
             FirstType = "a",
             SecondType = 1
          }, _partitionKeyForRangeLow, _rowKey );
+         _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, _partitionKeyForRangeLow, _partitionKeyForRangeHigh );
 
@@ -483,6 +460,7 @@ namespace TechSmith.Hyde.Test
             FirstType = "a",
             SecondType = 1
          }, _partitionKeyForRangeHigh, _rowKey );
+         _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, _partitionKeyForRangeLow, _partitionKeyForRangeHigh );
 
@@ -503,6 +481,7 @@ namespace TechSmith.Hyde.Test
             FirstType = "a",
             SecondType = 1
          }, "0", "b" );
+         _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, _partitionKeyForRangeLow, _partitionKeyForRangeHigh );
 
@@ -529,6 +508,7 @@ namespace TechSmith.Hyde.Test
             FirstType = "a",
             SecondType = 1
          }, "2012_01_10_11_28", "b" );
+         _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, "2012_01_10_11_26", "2012_01_10_11_27" );
 
@@ -561,6 +541,7 @@ namespace TechSmith.Hyde.Test
             FirstType = "a",
             SecondType = 1
          }, "2012_01_10_11_28", _rowKey );
+         _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetRangeByPartitionKey<SimpleDataItem>( _tableName, "2012_01_10_11_26", "2012_01_10_11_27" );
 
@@ -935,6 +916,7 @@ namespace TechSmith.Hyde.Test
          var item = new SimpleDataItem { FirstType = "a", SecondType = 1 };
 
          _tableStorageProvider.Add( _tableName, item, _partitionKey, "there" );
+         _tableStorageProvider.Save();
          var result = _tableStorageProvider.GetRangeByRowKey<SimpleDataItem>( _tableName, _partitionKey, "hi", "hj" );
 
          Assert.AreEqual( 0, result.Count() );
@@ -946,6 +928,7 @@ namespace TechSmith.Hyde.Test
          var item = new SimpleDataItem { FirstType = "a", SecondType = 1 };
 
          _tableStorageProvider.Add( _tableName, item, _partitionKey, "hithere" );
+         _tableStorageProvider.Save();
          var result = _tableStorageProvider.GetRangeByRowKey<SimpleDataItem>( _tableName, _partitionKey, "hi", "hj" );
 
          Assert.AreEqual( 1, result.Count() );
@@ -963,6 +946,7 @@ namespace TechSmith.Hyde.Test
          _tableStorageProvider.Add( _tableName, item2, _partitionKey, "hithere" );
          _tableStorageProvider.Add( _tableName, item3, _partitionKey, "jklh" );
          _tableStorageProvider.Add( _tableName, item4, _partitionKey, "hi" );
+         _tableStorageProvider.Save();
 
          var result = _tableStorageProvider.GetRangeByRowKey<SimpleDataItem>( _tableName, _partitionKey, "hi", "hj" );
 
@@ -998,6 +982,7 @@ namespace TechSmith.Hyde.Test
          _tableStorageProvider.Add( _tableName, dataItem2, _partitionKey, "2" );
          _tableStorageProvider.Add( _tableName, dataItem3, _partitionKey, "1" );
          _tableStorageProvider.Add( _tableName, dataItem4, _partitionKey, "4" );
+         _tableStorageProvider.Save();
 
          var listOfItems = _tableStorageProvider.GetCollection<SimpleDataItem>( _tableName, _partitionKey ).ToArray();
 

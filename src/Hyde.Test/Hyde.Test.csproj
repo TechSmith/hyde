@@ -96,6 +96,7 @@
     <Compile Include="DecoratedItem.cs" />
     <Compile Include="DynamicPropertyBag.cs" />
     <Compile Include="GenericTableEntityTests.cs" />
+    <Compile Include="MemoryTableContextTest.cs" />
     <Compile Include="ObjectExtensionsTest.cs" />
     <Compile Include="TableStorageProviderTests.cs" />
     <Compile Include="NullableSimpleType.cs" />

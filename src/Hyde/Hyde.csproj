@@ -89,15 +89,12 @@
     <Compile Include="Table\Azure\GenericTableEntity.cs" />
     <Compile Include="Table\InMemoryTableStorageProvider.cs" />
     <Compile Include="Table\ITableContext.cs" />
-    <Compile Include="Table\Memory\MemoryTable.cs" />
-    <Compile Include="Table\Memory\MemoryTableContext.cs" />
-    <Compile Include="Table\Memory\MemoryTableEntry.cs" />
     <Compile Include="Common\ObjectExtensions.cs" />
     <Compile Include="Common\DataAnnotations\PartitionKeyAttribute.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Common\PropertyInfoExtensions.cs" />
     <Compile Include="Common\DataAnnotations\RowKeyAttribute.cs" />
-    <Compile Include="Table\Memory\TableServiceEntity.cs" />
+    <Compile Include="Table\Memory\MemoryTableContext.cs" />
     <Compile Include="Table\TableStorageProvider.cs" />
   </ItemGroup>
   <ItemGroup>

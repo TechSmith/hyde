@@ -6,7 +6,7 @@ namespace TechSmith.Hyde.Table
    {
       public static void ResetAllTables()
       {
-         MemoryTableContext.ClearTables();
+         MemoryTableContext.ResetAllTables();
       }
 
       protected override ITableContext GetContext()
