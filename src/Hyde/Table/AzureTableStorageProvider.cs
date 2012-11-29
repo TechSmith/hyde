@@ -30,6 +30,7 @@ namespace TechSmith.Hyde.Table
       }
 
       public AzureTableStorageProvider( ICloudStorageAccount cloudStorageAccount )
+         : base ( new AzureTableEntityTableContext( cloudStorageAccount ) )
       {
          _cloudStorageAccount = cloudStorageAccount;
 
@@ -39,11 +40,6 @@ namespace TechSmith.Hyde.Table
             servicePoint.Expect100Continue = false;
             servicePoint.ConnectionLimit = 48;
          }
-      }
-
-      protected override ITableContext GetContext()
-      {
-         return new AzureTableEntityTableContext( _cloudStorageAccount );
       }
    }
 }

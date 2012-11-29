@@ -87,6 +87,7 @@
     <Compile Include="Table\Azure\ExecutableTableOperation.cs" />
     <Compile Include="ICloudStorageAccount.cs" />
     <Compile Include="Table\Azure\GenericTableEntity.cs" />
+    <Compile Include="Table\Execute.cs" />
     <Compile Include="Table\InMemoryTableStorageProvider.cs" />
     <Compile Include="Table\ITableContext.cs" />
     <Compile Include="Common\ObjectExtensions.cs" />

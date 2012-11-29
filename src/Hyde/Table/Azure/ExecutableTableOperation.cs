@@ -28,12 +28,19 @@ namespace TechSmith.Hyde.Table.Azure
          private set;
       }
 
-      public ExecutableTableOperation( string table, TableOperation operation, TableOperationType operationType, string partitionKey )
+      public string RowKey
+      {
+         get;
+         private set;
+      }
+
+      public ExecutableTableOperation( string table, TableOperation operation, TableOperationType operationType, string partitionKey, string rowKey )
       {
          Table = table;
          Operation = operation;
          OperationType = operationType;
          PartitionKey = partitionKey;
+         RowKey = rowKey;
       }
    }
 }

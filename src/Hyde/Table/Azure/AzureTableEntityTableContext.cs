@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -118,7 +119,7 @@ namespace TechSmith.Hyde.Table.Azure
       {
          GenericTableEntity entity = GenericTableEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
          var operation = TableOperation.Insert( entity );
-         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Insert, partitionKey ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Insert, partitionKey, rowKey ) );
       }
 
       public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
@@ -126,7 +127,7 @@ namespace TechSmith.Hyde.Table.Azure
          // Upsert does not use an ETag (If-Match header) - http://msdn.microsoft.com/en-us/library/windowsazure/hh452242.aspx
          GenericTableEntity entity = GenericTableEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
          var operation = TableOperation.InsertOrReplace( entity );
-         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.InsertOrReplace, partitionKey ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.InsertOrReplace, partitionKey, rowKey ) );
       }
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
@@ -135,7 +136,7 @@ namespace TechSmith.Hyde.Table.Azure
          entity.ETag = "*";
 
          var operation = TableOperation.Replace( entity );
-         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Replace, partitionKey ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Replace, partitionKey, rowKey ) );
       }
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
@@ -146,7 +147,7 @@ namespace TechSmith.Hyde.Table.Azure
             PartitionKey = partitionKey,
             RowKey = rowKey
          } );
-         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey ) );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey, rowKey ) );
       }
 
       public void DeleteCollection( string tableName, string partitionKey )
@@ -154,54 +155,173 @@ namespace TechSmith.Hyde.Table.Azure
          var allRowsInPartitonFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.Equal, partitionKey );
          var getAllInPartitionQuery = new TableQuery<TableEntity>().Where( allRowsInPartitonFilter );
          var entitiesToDelete = Table( tableName ).ExecuteQuery( getAllInPartitionQuery );
-         foreach ( var operation in entitiesToDelete.Select( TableOperation.Delete ) )
+         foreach ( var entity in entitiesToDelete )
          {
-            _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey ) );
+            var operation = TableOperation.Delete( entity );
+            _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, partitionKey, entity.RowKey ) );
          }
       }
 
-      public void Save()
+      public void Save( Execute executeMethod )
       {
-         while ( _operations.Count > 0 )
+         if ( !_operations.Any() )
          {
-            ExecutableTableOperation operation = _operations.Dequeue();
+            return;
+         }
 
-            try
+         try
+         {
+            switch ( executeMethod )
             {
-               Table( operation.Table ).Execute( operation.Operation, _retriableTableRequest );
+               case Execute.Individually:
+               {
+                  SaveIndividual( new Queue<ExecutableTableOperation>( _operations ) );
+                  break;
+               }
+               case Execute.InBatches:
+               {
+                  SaveBatch( new Queue<ExecutableTableOperation>( _operations ) );
+                  break;
+               }
+               case Execute.Atomically:
+               {
+                  SaveAtomically( new Queue<ExecutableTableOperation>( _operations ) );
+                  break;
+               }
+               default:
+               {
+                  throw new ArgumentException( "Unsupported execution method: " + executeMethod );
+               }
             }
-            catch ( StorageException ex )
+         }
+         finally
+         {
+            _operations.Clear();
+         }
+      }
+
+      private void SaveIndividual( IEnumerable<ExecutableTableOperation> operations )
+      {
+         foreach ( var op in operations )
+         {
+            var operation = op;
+            HandleTableStorageExceptions( TableOperationType.Delete == operation.OperationType, () =>
+               Table( operation.Table ).Execute( operation.Operation, _retriableTableRequest ) );
+         }
+      }
+
+      private static void HandleTableStorageExceptions( bool isUnbatchedDelete, Action action )
+      {
+         try
+         {
+            action();
+         }
+         catch ( StorageException ex )
+         {
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound && isUnbatchedDelete )
             {
-               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound && operation.OperationType == TableOperationType.Delete )
-               {
-                  continue;
-               }
-
-               _operations.Clear();
-               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest && 
-                    operation.OperationType == TableOperationType.Delete &&
-                    ex.RequestInformation.ExtendedErrorInformation.ErrorCode == "OutOfRangeInput" )
-               {
-                  // The table does not exist.
-                  continue;
-               }
-
-               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict )
-               {
-                  throw new EntityAlreadyExistsException( "Entity already exists", ex );
-               }
-               if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound )
-               {
-                  throw new EntityDoesNotExistException( "Entity does not exist", ex );
-               }
-
-               throw;
+               return;
             }
-            catch ( Exception )
+
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest &&
+                 isUnbatchedDelete &&
+                 ex.RequestInformation.ExtendedErrorInformation.ErrorCode == "OutOfRangeInput" )
             {
-               _operations.Clear();
-               throw;
+               // The table does not exist.
+               return;
             }
+
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.Conflict )
+            {
+               throw new EntityAlreadyExistsException( "Entity already exists", ex );
+            }
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.NotFound )
+            {
+               throw new EntityDoesNotExistException( "Entity does not exist", ex );
+            }
+            if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest )
+            {
+               throw new InvalidOperationException( "Table storage returned 'Bad Request'", ex );
+            }
+
+            throw;
+         }
+      }
+
+      private void SaveBatch( IEnumerable<ExecutableTableOperation> operations )
+      {
+         // For two operations to appear in the same batch...
+         Func<ExecutableTableOperation, ExecutableTableOperation, bool> canBatch = ( op1, op2 ) =>
+            // they must be on the same table
+            op1.Table == op2.Table
+               // and the same partition
+            && op1.PartitionKey == op2.PartitionKey
+               // and neither can be a delete,
+            && !( op1.OperationType == TableOperationType.Delete || op2.OperationType == TableOperationType.Delete )
+               // and the row keys must be different.
+            && op1.RowKey != op2.RowKey;
+
+         // Group consecutive batchable operations
+         var batches = new List<List<ExecutableTableOperation>> { new List<ExecutableTableOperation>() };
+         foreach ( var nextOp in operations )
+         {
+            // start a new batch if the current batch is full, or if any op in the current
+            // batch conflicts with the next op.
+            if ( batches.Last().Count == 100 || batches.Last().Any( op => !canBatch( op, nextOp ) ) )
+            {
+               batches.Add( new List<ExecutableTableOperation>() );
+            }
+            batches.Last().Add( nextOp );
+         }
+
+         foreach ( var batch in batches )
+         {
+            // No need to use an EGT for a single operation.
+            if ( batch.Count == 1 )
+            {
+               SaveIndividual( new [] { batch[0] } );
+               continue;
+            }
+
+            var batchOperation = new TableBatchOperation();
+            var table = batch.First().Table;
+            foreach ( var op in batch )
+            {
+               batchOperation.Add( op.Operation );
+            }
+            ExecuteBatchHandlingExceptions( table, batchOperation );
+         }
+      }
+
+      private void ExecuteBatchHandlingExceptions( string table, TableBatchOperation batchOperation )
+      {
+         HandleTableStorageExceptions( false, () =>
+            Table( table ).ExecuteBatch( batchOperation, _retriableTableRequest ) );
+      }
+
+      private void SaveAtomically( IEnumerable<ExecutableTableOperation> ops )
+      {
+         var operations = ops.ToList();
+         var partitionKeys = operations.Select( op => op.PartitionKey ).Distinct();
+         if ( partitionKeys.Count() > 1 )
+         {
+            throw new InvalidOperationException( "Cannot atomically execute operations on different partitions" );
+         }
+
+         var tables = operations.Select( op => op.Table ).Distinct().ToList();
+         if ( tables.Count() > 1 )
+         {
+            throw new InvalidOperationException( "Cannot atomically execute operations on multiple tables" );
+         }
+
+         var batchOp = new TableBatchOperation();
+         foreach ( var op in operations )
+         {
+            batchOp.Add( op.Operation );
+         }
+         if ( batchOp.Count > 0 )
+         {
+            ExecuteBatchHandlingExceptions( tables[0], batchOp );
          }
       }
 

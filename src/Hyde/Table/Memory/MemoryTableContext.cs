@@ -75,6 +75,19 @@ namespace TechSmith.Hyde.Table.Memory
                return new List<GenericTableEntity>( _entities.Values );
             }
          }
+
+         public Partition DeepCopy()
+         {
+            var result = new Partition();
+            lock ( _entities )
+            {
+               foreach ( var e in _entities )
+               {
+                  result._entities.Add( e.Key, e.Value );
+               }
+            }
+            return result;
+         }
       }
 
       private class Table
@@ -100,6 +113,19 @@ namespace TechSmith.Hyde.Table.Memory
                return new List<Partition>( _partitions.Values );
             }
          }
+
+         public Table DeepCopy()
+         {
+            var result = new Table();
+            lock ( _partitions )
+            {
+               foreach ( var p in _partitions )
+               {
+                  result._partitions.Add( p.Key, p.Value.DeepCopy() );
+               }
+            }
+            return result;
+         }
       }
 
       private class StorageAccount
@@ -117,11 +143,59 @@ namespace TechSmith.Hyde.Table.Memory
                return _tables[tableName];
             }
          }
+
+         public StorageAccount DeepCopy()
+         {
+            var result = new StorageAccount();
+            lock ( _tables )
+            {
+               foreach ( var tableEntry in _tables )
+               {
+                  result._tables.Add( tableEntry.Key, tableEntry.Value.DeepCopy() );
+               }
+            }
+            return result;
+         }
+      }
+
+      private class TableAction
+      {
+         public Action<StorageAccount> Action
+         {
+            get;
+            private set;
+         }
+
+         public string PartitionKey
+         {
+            get;
+            private set;
+         }
+
+         public string RowKey
+         {
+            get;
+            private set;
+         }
+
+         public string TableName
+         {
+            get;
+            private set;
+         }
+
+         public TableAction( Action<StorageAccount> action, string partitionKey, string rowKey, string tableName )
+         {
+            Action = action;
+            PartitionKey = partitionKey;
+            RowKey = rowKey;
+            TableName = tableName;
+         }
       }
 
       private static StorageAccount _tables = new StorageAccount();
 
-      private readonly Queue<Action<StorageAccount>> _pendingActions = new Queue<Action<StorageAccount>>();
+      private readonly Queue<TableAction> _pendingActions = new Queue<TableAction>();
 
       public static void ResetAllTables()
       {
@@ -207,24 +281,28 @@ namespace TechSmith.Hyde.Table.Memory
       public void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
       {
          var entity = GenericTableEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
-         _pendingActions.Enqueue( tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Add( entity ) );
+         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Add( entity );
+         _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
       }
 
       public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
       {
          var entity = GenericTableEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
-         _pendingActions.Enqueue( tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Upsert( entity ) );
+         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Upsert( entity );
+         _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
       }
 
       public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
       {
          var entity = GenericTableEntity.HydrateFrom( item, partitionKey, rowKey );
-         _pendingActions.Enqueue( tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Update( entity ) );
+         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Update( entity );
+         _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
       }
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
       {
-         _pendingActions.Enqueue( tables => tables.GetTable( tableName ).GetPartition( partitionKey ).Delete( rowKey ) );
+         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( partitionKey ).Delete( rowKey );
+         _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
       }
 
       public void DeleteCollection( string tableName, string partitionKey )
@@ -235,14 +313,65 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
-      public void Save()
+      public void Save( Execute executeMethod )
       {
-         foreach ( var action in _pendingActions )
+         try
          {
-            action( _tables );
+            if ( executeMethod == Execute.Atomically )
+            {
+               SaveAtomically();
+               return;
+            }
+
+            foreach ( var action in _pendingActions )
+            {
+               lock ( _tables )
+               {
+                  action.Action( _tables );
+               }
+            }
          }
-         _pendingActions.Clear();
+         finally
+         {
+            _pendingActions.Clear();
+         }
       }
+
+      private void SaveAtomically()
+      {
+         if ( _pendingActions.Count > 100 )
+         {
+            throw new InvalidOperationException( "Cannot atomically execute more than 100 operations" );
+         }
+
+         var partitionKeys = _pendingActions.Select( op => op.PartitionKey ).Distinct();
+         if ( partitionKeys.Count() > 1 )
+         {
+            throw new InvalidOperationException( "Cannot atomically execute operations on different partitions" );
+         }
+
+         var groupedByEntity = _pendingActions.GroupBy( op => Tuple.Create( op.PartitionKey, op.RowKey ) );
+         if ( groupedByEntity.Any( g => g.Count() > 1 ) )
+         {
+            throw new InvalidOperationException( "Cannot atomically execute two operations on the same entity" );
+         }
+
+         var tables = _pendingActions.Select( op => op.TableName ).Distinct();
+         if ( tables.Count() > 1 )
+         {
+            throw new InvalidOperationException( "Cannot atomically execute operations on multiple tables" );
+         }
+
+         lock ( _tables )
+         {
+            var resultingTables = _tables.DeepCopy();
+            foreach ( var action in _pendingActions )
+            {
+               action.Action( resultingTables );
+            }
+            _tables = resultingTables;
+         }
+   }
 
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {

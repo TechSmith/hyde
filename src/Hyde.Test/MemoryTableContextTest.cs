@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde.Common;
+using TechSmith.Hyde.Table;
 using TechSmith.Hyde.Table.Memory;
 
 namespace TechSmith.Hyde.Test
@@ -46,7 +47,7 @@ namespace TechSmith.Hyde.Test
       {
          var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
          _context.AddNewItem( "table", addedItem, "abc", "123" );
-         _context.Save();
+         _context.Save( Execute.Individually );
 
          var returnedItem = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
          Assert.AreEqual( addedItem.Id, returnedItem.Id );
@@ -59,7 +60,7 @@ namespace TechSmith.Hyde.Test
       {
          var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
          _context.AddNewItem( "table", addedItem, "abc", "123" );
-         _context.Save();
+         _context.Save( Execute.Individually );
 
          var returnedItem = new MemoryTableContext().GetItem<DecoratedItem>( "table", "abc", "123" );
          Assert.AreEqual( addedItem.Id, returnedItem.Id );
@@ -72,7 +73,7 @@ namespace TechSmith.Hyde.Test
       {
          var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
          _context.AddNewItem( "table", addedItem, "abc", "123" );
-         _context.Save();
+         _context.Save( Execute.Individually );
 
          try
          {
@@ -88,7 +89,7 @@ namespace TechSmith.Hyde.Test
       public void AddNewItem_ItemAlreadyExistsAndSaveIsNotCalled_NoExceptionThrown()
       {
          _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
-         _context.Save();
+         _context.Save( Execute.Individually );
 
          _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
       }
@@ -97,12 +98,12 @@ namespace TechSmith.Hyde.Test
       public void AddNewItem_ItemAlreadyExistsAndSaveIsCalled_ThrowsEntityAlreadyExistsException()
       {
          _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
-         _context.Save();
+         _context.Save( Execute.Individually );
 
          _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
          try
          {
-            _context.Save();
+            _context.Save( Execute.Individually );
             Assert.Fail( "Should have thrown exception" );
          }
          catch ( EntityAlreadyExistsException )
@@ -117,7 +118,7 @@ namespace TechSmith.Hyde.Test
 
          try
          {
-            _context.Save();
+            _context.Save( Execute.Individually );
             Assert.Fail( "Should have thrown exception" );
          }
          catch ( EntityDoesNotExistException )
@@ -144,7 +145,7 @@ namespace TechSmith.Hyde.Test
          {
             _context.AddNewItem( "table", item, item.Id, item.Name );
          }
-         _context.Save();
+         _context.Save( Execute.Individually );
 
          var result = _context.GetCollection<DecoratedItem>( "table", "abc" ).ToList();
          Assert.AreEqual( 2, result.Count );
@@ -156,7 +157,7 @@ namespace TechSmith.Hyde.Test
       public void Upsert_EntityDoesNotExist_EntityCreatedOnSave()
       {
          _context.Upsert( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
-         _context.Save();
+         _context.Save( Execute.Individually );
 
          var item = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
          Assert.AreEqual( 42, item.Age );
@@ -166,10 +167,10 @@ namespace TechSmith.Hyde.Test
       public void Upsert_EntityExists_EntityUpdatedOnSave()
       {
          _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
-         _context.Save();
+         _context.Save( Execute.Individually );
 
          _context.Upsert( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 36 }, "abc", "123" );
-         _context.Save();
+         _context.Save( Execute.Individually );
 
          var item = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
          Assert.AreEqual( 36, item.Age );
@@ -179,10 +180,10 @@ namespace TechSmith.Hyde.Test
       public void Delete_EntityExists_EntityDeletedOnSave()
       {
          _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
-         _context.Save();
+         _context.Save( Execute.Individually );
 
          _context.DeleteItem( "table", "abc", "123" );
-         _context.Save();
+         _context.Save( Execute.Individually );
 
          try
          {
@@ -198,7 +199,123 @@ namespace TechSmith.Hyde.Test
       public void Delete_EntityDoesNotExist_NoActionOnSave()
       {
          _context.DeleteItem( "table", "abc", "123" );
-         _context.Save();
+         _context.Save( Execute.Individually );
+      }
+
+      [TestMethod]
+      public void SaveAtomically_ManyOperations_AllOperationsPersist()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "789", Age = 42 }, "abc", "789" );
+         _context.Save( Execute.Individually );
+
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "456", Age = 42 }, "abc", "456" );
+         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 34 }, "abc", "123" ); 
+         _context.DeleteItem( "table", "abc", "789" );
+
+         try
+         {
+            _context.Save( Execute.Atomically );
+         }
+         catch ( EntityAlreadyExistsException )
+         {
+         }
+
+         var items = _context.GetCollection<DecoratedItem>( "table", "abc" ).ToList();
+         Assert.AreEqual( 2, items.Count );
+         Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "123" && i.Age == 34 ) );
+         Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "456" && i.Age == 42 ) );
+      }
+
+      [TestMethod]
+      public void SaveAtomically_ManyOperationsAndOneFails_NoOperationsPersist()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "789", Age = 42 }, "abc", "789" );
+         _context.Save( Execute.Individually );
+
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "456", Age = 42 }, "abc", "456" );
+         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 34 }, "abc", "123" ); 
+         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "not found", Age = 42 }, "abc", "not found" ); // should fail
+         _context.DeleteItem( "table", "abc", "789" );
+
+         try
+         {
+            _context.Save( Execute.Atomically );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( EntityDoesNotExistException )
+         {
+         }
+
+         var items = _context.GetCollection<DecoratedItem>( "table", "abc" ).ToList();
+         Assert.AreEqual( 2, items.Count );
+         Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "123" && i.Age == 42 ) );
+         Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "789" && i.Age == 42 ) );
+      }
+
+      [TestMethod]
+      public void SaveAtomically_TwoOperationsOnSameEntity_ThrowsInvalidOperationException()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 36 }, "abc", "123" );
+         try
+         {
+            _context.Save( Execute.Atomically );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( InvalidOperationException )
+         {
+         }
+      }
+
+      [TestMethod]
+      public void SaveAtomically_OperationsOnDifferentPartitions_ThrowsInvalidOperationException()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "foo" }, "abc", "foo" );
+         _context.AddNewItem( "table", new DecoratedItem { Id = "bcd", Name = "foo" }, "bcd", "foo" );
+         try
+         {
+            _context.Save( Execute.Atomically );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( InvalidOperationException )
+         {
+         }
+      }
+
+      [TestMethod]
+      public void SaveAtomically_OperationsOnTooManyEntities_ThrowsInvalidOperationException()
+      {
+         for ( int i=0 ; i < 101; ++i )
+         {
+            _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "foo" + i }, "abc", "foo" + i );
+         }
+
+         try
+         {
+            _context.Save( Execute.Atomically );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( InvalidOperationException )
+         {
+         }
+      }
+
+      [TestMethod]
+      public void SaveAtomically_OperationsOnDifferentTables_ThrowsInvalidOperationException()
+      {
+         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "foo" }, "abc", "foo" );
+         _context.AddNewItem( "table2", new DecoratedItem { Id = "abc", Name = "bar" }, "abc", "bar" );
+
+         try
+         {
+            _context.Save( Execute.Atomically );
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( InvalidOperationException )
+         {
+         }
       }
    }
 }

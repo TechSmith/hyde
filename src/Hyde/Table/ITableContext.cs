@@ -25,7 +25,7 @@ namespace TechSmith.Hyde.Table
       // Shared implementation between generics and dynamics.
       void DeleteItem( string tableName, string partitionKey, string rowKey );
       void DeleteCollection( string tableName, string partitionKey );
-      void Save();
+      void Save( Execute executeMethod );
 
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
       IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new();
