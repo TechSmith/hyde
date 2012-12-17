@@ -19,57 +19,50 @@ namespace TechSmith.Hyde.Table.Azure
       private static readonly Dictionary<Type, Func<EntityProperty, object>> _typeToValueFunctions = new Dictionary<Type, Func<EntityProperty, object>>
         {
            { typeof( string ), p => p.StringValue },
-           { typeof( int ), p => p.Int32Value },
-           { typeof( int? ), p => IsNull( p ) ? (int?) null : p.Int32Value },
-           { typeof( double ), p => p.DoubleValue },
-           { typeof( double? ), p => IsNull( p ) ? (double?) null : p.DoubleValue },
+           { typeof( int ), p => p.Int32Value.Value },
+           { typeof( int? ), p => p.Int32Value },
+           { typeof( double ), p => p.DoubleValue.Value },
+           { typeof( double? ), p => p.DoubleValue },
            { typeof( byte[] ), p => p.BinaryValue },
-           { typeof( Guid ), p => p.GuidValue },
-           { typeof( Guid? ), p => IsNull(p)  ? (Guid?) null : p.GuidValue },
+           { typeof( Guid ), p => p.GuidValue.Value },
+           { typeof( Guid? ), p => p.GuidValue },
            { typeof( DateTime ), p => p.DateTimeOffsetValue.Value.UtcDateTime },
-           { typeof( DateTime? ), p => IsNull( p )  ? (DateTime?) null : p.DateTimeOffsetValue.Value.UtcDateTime },
-           { typeof( bool ), p => p.BooleanValue },
-           { typeof( bool? ), p => IsNull( p ) ? (bool?) null : p.BooleanValue },
-           { typeof( long ), p => p.Int64Value },
-           { typeof( long? ), p => IsNull( p ) ? (long?) null : p.Int64Value },
-           { typeof( Uri ), p => IsNull( p ) ? null : new Uri( p.StringValue ) },
+           { typeof( DateTime? ), p => p.DateTimeOffsetValue.HasValue ? p.DateTimeOffsetValue.Value.UtcDateTime : (DateTime?) null },
+           { typeof( bool ), p => p.BooleanValue.Value },
+           { typeof( bool? ), p => p.BooleanValue },
+           { typeof( long ), p => p.Int64Value.Value },
+           { typeof( long? ), p => p.Int64Value },
+           { typeof( Uri ), p => string.IsNullOrWhiteSpace( p.StringValue ) ? null : new Uri( p.StringValue ) },
         };
-
-      private static readonly PropertyInfo _isNullProperty = typeof( EntityProperty ).GetProperty( "IsNull", BindingFlags.NonPublic | BindingFlags.Instance );
-      private static bool IsNull( EntityProperty entityProperty )
-      {
-         // For some reason, IsNull is an internal property. Hopefully it will be made public in the future
-         return (bool) _isNullProperty.GetValue( entityProperty, null );
-      }
 
       private static readonly Dictionary<Type, Func<object, EntityProperty>> _typeToEntityPropertyFunctions = new Dictionary<Type, Func<object, EntityProperty>>
         {
            { typeof( string ), o => new EntityProperty( (string) o) },
            { typeof( int ), o => new EntityProperty( (int) o) },
-           { typeof( int? ), o => o == null ? new EntityProperty( (string) null ) : new EntityProperty( (int) o) },
+           { typeof( int? ), o => o == null ? new EntityProperty( (int?) null ) : new EntityProperty( (int) o) },
            { typeof( double ), o => new EntityProperty((double) o) },
-           { typeof( double? ), o => o == null ? new EntityProperty((string) null ) : new EntityProperty((double) o) },
+           { typeof( double? ), o => o == null ? new EntityProperty((double?) null ) : new EntityProperty((double) o) },
            { typeof( byte[] ), o => new EntityProperty((byte[]) o) },
            { typeof( Guid ), o => new EntityProperty((Guid) o)},
-           { typeof( Guid? ), o => o== null ? new EntityProperty((string) null) : new EntityProperty((Guid) o)},
+           { typeof( Guid? ), o => o == null ? new EntityProperty((Guid?) null) : new EntityProperty((Guid) o)},
            { typeof( DateTime ), o => new EntityProperty( (DateTime) o)  },
            { typeof( DateTime? ), o => new EntityProperty( (DateTime?) o)  },
            { typeof( bool ), o => new EntityProperty((bool) o)},
-           { typeof( bool? ), o => o== null ? new EntityProperty((string) null): new EntityProperty((bool) o) },
+           { typeof( bool? ), o => o== null ? new EntityProperty((bool?) null): new EntityProperty((bool) o) },
            { typeof( long ), o => new EntityProperty((long) o)},
-           { typeof( long? ), o => o == null ? new EntityProperty((string) null):new EntityProperty((long) o ) },
+           { typeof( long? ), o => o == null ? new EntityProperty((long?) null):new EntityProperty((long) o ) },
            { typeof( Uri ), o => o == null ? new EntityProperty((string) null) : new EntityProperty( ((Uri)o).AbsoluteUri) },
         };
 
       private static readonly Dictionary<EdmType, Func<EntityProperty, object>> _edmTypeToConverterFunction = new Dictionary<EdmType, Func<EntityProperty, object>>
         {
            { EdmType.Binary, p => p.BinaryValue },
-           { EdmType.Boolean, p => IsNull( p ) ? (bool?) null : p.BooleanValue },
+           { EdmType.Boolean, p => p.BooleanValue.HasValue ? p.BooleanValue.Value : (bool?) null },
            { EdmType.DateTime, p => p.DateTimeOffsetValue.HasValue ? p.DateTimeOffsetValue.Value.UtcDateTime : (DateTime?) null  },
-           { EdmType.Double, p => IsNull( p ) ? (double?) null : p.DoubleValue },
-           { EdmType.Guid, p => IsNull( p ) ? (Guid?) null : p.GuidValue },
-           { EdmType.Int32, p => IsNull( p ) ? (int?) null : p.Int32Value },
-           { EdmType.Int64, p => IsNull( p ) ? (long?) null : p.Int64Value },
+           { EdmType.Double, p => p.DoubleValue.HasValue ? p.DoubleValue.Value : (double?) null },
+           { EdmType.Guid, p => p.GuidValue.HasValue ? p.GuidValue.Value : (Guid?) null },
+           { EdmType.Int32, p => p.Int32Value.HasValue ? p.Int32Value.Value : (int?) null },
+           { EdmType.Int64, p => p.Int64Value.HasValue ? p.Int64Value.Value : (long?) null },
            { EdmType.String, p => p.StringValue },
         };
 
