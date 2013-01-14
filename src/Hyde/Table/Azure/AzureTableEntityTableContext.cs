@@ -26,14 +26,7 @@ namespace TechSmith.Hyde.Table.Azure
 
       public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
       {
-         TableResult result = Get( tableName, partitionKey, rowKey );
-
-         if ( result.Result == null )
-         {
-            throw new EntityDoesNotExistException( partitionKey, rowKey, null );
-         }
-
-         return ( (GenericTableEntity) result.Result ).ConvertTo<T>();
+         return Get( tableName, partitionKey, rowKey ).ConvertTo<T>();
       }
 
       public IEnumerable<T> GetCollection<T>( string tableName ) where T : new()
@@ -73,11 +66,7 @@ namespace TechSmith.Hyde.Table.Azure
 
       public dynamic GetItem( string tableName, string partitionKey, string rowKey )
       {
-         var retrieveOperation = TableOperation.Retrieve<GenericTableEntity>( partitionKey, rowKey );
-
-         TableResult result = Table( tableName ).Execute( retrieveOperation, _retriableTableRequest );
-
-         return ( (GenericTableEntity) result.Result ).ConvertToDynamic();
+         return Get( tableName, partitionKey, rowKey ).ConvertToDynamic();
       }
 
       public IEnumerable<dynamic> GetCollection( string tableName )
@@ -331,11 +320,18 @@ namespace TechSmith.Hyde.Table.Azure
          return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
       }
 
-      private TableResult Get( string tableName, string partitionKey, string rowKey )
+      private GenericTableEntity Get( string tableName, string partitionKey, string rowKey )
       {
          var retrieveOperation = TableOperation.Retrieve<GenericTableEntity>( partitionKey, rowKey );
 
-         return Table( tableName ).Execute( retrieveOperation, _retriableTableRequest );
+         var result = Table( tableName ).Execute( retrieveOperation, _retriableTableRequest );
+
+         if ( result.Result == null )
+         {
+            throw new EntityDoesNotExistException( partitionKey, rowKey, null );
+         }
+
+         return (GenericTableEntity)result.Result;
       }
 
       private IEnumerable<T> ExecuteFilterOnTable<T>( string tableName, string filter ) where T : new()

@@ -4,6 +4,7 @@ using System.Dynamic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.Storage.Table;
+using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Table;
 
 namespace TechSmith.Hyde.IntegrationTest
@@ -120,6 +121,13 @@ namespace TechSmith.Hyde.IntegrationTest
 
          Assert.AreEqual( "this is the first item.", result.FirstItem );
          Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
+      [ExpectedException( typeof( EntityDoesNotExistException ) )]
+      public void Get_ObjectDoesNotExist_ThrowsEntityDoesNotExistException()
+      {
+         _tableStorageProvider.Get( _tableName, "not", "found" );
       }
 
       [TestMethod, TestCategory( "Integration" )]
