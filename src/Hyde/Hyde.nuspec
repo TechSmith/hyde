@@ -11,7 +11,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <releaseNotes>
-      Added dynamic GetCollection method to retrieve entire table
+      Fix AzureTableStorageProvider.SetConcurrentConnectionLimit, and allow manual configuration of connection limits
     </releaseNotes>
     <copyright>Copyright TechSmith Corporation 2012</copyright>
     <tags>TechSmith, Azure, Storage, Table Storage, Azure Table</tags>
