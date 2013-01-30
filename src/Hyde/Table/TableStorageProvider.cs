@@ -76,6 +76,16 @@ namespace TechSmith.Hyde.Table
          return _context.GetCollection<T>( tableName );
       }
 
+      /// <summary>
+      /// Return the entire contents of tableName.
+      /// </summary>
+      /// <param name="tableName">name of the table</param>
+      /// <returns>all rows in tableName</returns>
+      public IEnumerable<dynamic> GetCollection( string tableName )
+      {
+         return _context.GetCollection( tableName );
+      }
+
       [Obsolete( "Use GetRangeByPartitionKey instead." )]
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {

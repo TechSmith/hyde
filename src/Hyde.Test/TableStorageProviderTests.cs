@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data.Services.Client;
 using System.Globalization;
@@ -994,6 +995,31 @@ namespace TechSmith.Hyde.Test
          Assert.IsTrue( dataItem2.ComesBefore( listOfItems, dataItem4 ), "Making sure item 2 comes before item 4." );
 
          Assert.IsTrue( dataItem1.ComesBefore( listOfItems, dataItem4 ), "Making sure item 1 comes before item 4." );
+      }
+
+      [TestMethod]
+      public void GetCollection_ItemsInStoreRetrievedDynamically_ShouldBeRetreived()
+      {
+         int expectedCount = 5;
+         EnsureItemsInContext( _tableStorageProvider, expectedCount );
+
+         IEnumerable<dynamic> items = _tableStorageProvider.GetCollection( _tableName );
+
+         Assert.AreEqual( expectedCount, items.Count() );
+      }
+
+      private void EnsureItemsInContext( TableStorageProvider tableStorageProvider, int count )
+      {
+         for ( int i = 0; i < count; i++ )
+         {
+            var item = new SimpleDataItem
+                       {
+                          FirstType = i.ToString( CultureInfo.InvariantCulture ),
+                          SecondType = i 
+                       };
+            tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey + i );
+         }
+         tableStorageProvider.Save();
       }
 
       private void EnsureOneItemInContext( TableStorageProvider tableStorageProvider )
