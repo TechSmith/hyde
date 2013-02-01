@@ -18,9 +18,9 @@ namespace TechSmith.Hyde.Table
       IEnumerable<dynamic> GetCollection( string tableName, string partitionKey );
       IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh );
       IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh );
-      void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey );
-      void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey );
-      void Update( string tableName, dynamic item, string partitionKey, string rowKey );
+      void AddNewItem( string tableName, TableItem tableItem );
+      void Upsert( string tableName, TableItem tableItem );
+      void Update( string tableName, TableItem tableItem );
 
       // Shared implementation between generics and dynamics.
       void DeleteItem( string tableName, string partitionKey, string rowKey );

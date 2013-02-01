@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -104,28 +103,28 @@ namespace TechSmith.Hyde.Table.Azure
          return ExecuteFilterOnTable( tableName, fullRangeFilter );
       }
 
-      public void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
+      public void AddNewItem( string tableName, TableItem tableItem )
       {
-         GenericTableEntity entity = GenericTableEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
-         var operation = TableOperation.Insert( entity );
-         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Insert, partitionKey, rowKey ) );
+         GenericTableEntity genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         var operation = TableOperation.Insert( genericTableEntity );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Insert, tableItem.PartitionKey, tableItem.RowKey ) );
       }
 
-      public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
+      public void Upsert( string tableName, TableItem tableItem )
       {
          // Upsert does not use an ETag (If-Match header) - http://msdn.microsoft.com/en-us/library/windowsazure/hh452242.aspx
-         GenericTableEntity entity = GenericTableEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
-         var operation = TableOperation.InsertOrReplace( entity );
-         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.InsertOrReplace, partitionKey, rowKey ) );
+         GenericTableEntity genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         var operation = TableOperation.InsertOrReplace( genericTableEntity );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.InsertOrReplace, tableItem.PartitionKey, tableItem.RowKey ) );
       }
 
-      public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
+      public void Update( string tableName, TableItem tableItem )
       {
-         GenericTableEntity entity = GenericTableEntity.HydrateFrom( item, partitionKey, rowKey );
-         entity.ETag = "*";
+         GenericTableEntity genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         genericTableEntity.ETag = "*";
 
-         var operation = TableOperation.Replace( entity );
-         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Replace, partitionKey, rowKey ) );
+         var operation = TableOperation.Replace( genericTableEntity );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Replace, tableItem.PartitionKey, tableItem.RowKey ) );
       }
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Text;
-using System.Collections.Generic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde.Common;
@@ -31,7 +29,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void GetItem_ItemAddedButSaveNotCalled_ThrowsEntityDoesNotExistException()
       {
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 50 }, "abc", "123" );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties( new DecoratedItem { Id = "abc", Name = "123", Age = 50 } ) );
          try
          {
             _context.GetItem<DecoratedItem>( "table", "abc", "123" );
@@ -45,21 +43,23 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Save_ItemAdded_GetItemReturnsTheItem()
       {
-         var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
-         _context.AddNewItem( "table", addedItem, "abc", "123" );
+         var item = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
+         var entity = TableItem.CreateAndThrowOnReservedProperties(item );
+         _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
 
          var returnedItem = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
-         Assert.AreEqual( addedItem.Id, returnedItem.Id );
-         Assert.AreEqual( addedItem.Name, returnedItem.Name );
-         Assert.AreEqual( addedItem.Age, returnedItem.Age );
+         Assert.AreEqual( item.Id, returnedItem.Id );
+         Assert.AreEqual( item.Name, returnedItem.Name );
+         Assert.AreEqual( item.Age, returnedItem.Age );
       }
 
       [TestMethod]
       public void GetItem_ItemAddedAndSavedWithDifferentContext_ReturnsItem()
       {
          var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
-         _context.AddNewItem( "table", addedItem, "abc", "123" );
+         var entity = TableItem.CreateAndThrowOnReservedProperties( addedItem );
+         _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
 
          var returnedItem = new MemoryTableContext().GetItem<DecoratedItem>( "table", "abc", "123" );
@@ -72,7 +72,8 @@ namespace TechSmith.Hyde.Test
       public void GetItem_ItemAddedToDifferentTable_ThrowsEntityDoesNotExistException()
       {
          var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
-         _context.AddNewItem( "table", addedItem, "abc", "123" );
+         var entity = TableItem.CreateAndThrowOnReservedProperties( addedItem );
+         _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
 
          try
@@ -88,19 +89,19 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void AddNewItem_ItemAlreadyExistsAndSaveIsNotCalled_NoExceptionThrown()
       {
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "123" } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "123" } ) );
       }
 
       [TestMethod]
       public void AddNewItem_ItemAlreadyExistsAndSaveIsCalled_ThrowsEntityAlreadyExistsException()
       {
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties( new DecoratedItem { Id = "abc", Name = "123" } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123" }, "abc", "123" );
+         _context.AddNewItem( "table",TableItem.CreateAndThrowOnReservedProperties( new DecoratedItem { Id = "abc", Name = "123" } ) );
          try
          {
             _context.Save( Execute.Individually );
@@ -114,7 +115,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Update_EntityDoesNotExist_ThrowsExceptionOnSave()
       {
-         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 12 }, "abc", "123" );
+         _context.Update( "table",TableItem.CreateAndThrowOnReservedProperties( new DecoratedItem { Id = "abc", Name = "123", Age = 12 } ) );
 
          try
          {
@@ -143,7 +144,7 @@ namespace TechSmith.Hyde.Test
                      };
          foreach ( var item in items )
          {
-            _context.AddNewItem( "table", item, item.Id, item.Name );
+            _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(item) );
          }
          _context.Save( Execute.Individually );
 
@@ -156,7 +157,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Upsert_EntityDoesNotExist_EntityCreatedOnSave()
       {
-         _context.Upsert( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.Upsert( "table",TableItem.CreateAndThrowOnReservedProperties( new DecoratedItem { Id = "abc", Name = "123", Age = 42 }) );
          _context.Save( Execute.Individually );
 
          var item = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
@@ -166,10 +167,10 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Upsert_EntityExists_EntityUpdatedOnSave()
       {
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
          _context.Save( Execute.Individually );
 
-         _context.Upsert( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 36 }, "abc", "123" );
+         _context.Upsert( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "123", Age = 36 } ) );
          _context.Save( Execute.Individually );
 
          var item = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
@@ -179,7 +180,7 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void Delete_EntityExists_EntityDeletedOnSave()
       {
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
          _context.Save( Execute.Individually );
 
          _context.DeleteItem( "table", "abc", "123" );
@@ -205,12 +206,12 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_ManyOperations_AllOperationsPersist()
       {
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "789", Age = 42 }, "abc", "789" );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "789", Age = 42 } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "456", Age = 42 }, "abc", "456" );
-         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 34 }, "abc", "123" ); 
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "456", Age = 42 } ) );
+         _context.Update( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "123", Age = 34 } ) ); 
          _context.DeleteItem( "table", "abc", "789" );
 
          try
@@ -230,13 +231,13 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_ManyOperationsAndOneFails_NoOperationsPersist()
       {
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "789", Age = 42 }, "abc", "789" );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "789", Age = 42 } ) );
          _context.Save( Execute.Individually );
 
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "456", Age = 42 }, "abc", "456" );
-         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 34 }, "abc", "123" ); 
-         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "not found", Age = 42 }, "abc", "not found" ); // should fail
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "456", Age = 42 } ) );
+         _context.Update( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "123", Age = 34 } ) ); 
+         _context.Update( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "not found", Age = 42 } ) ); // should fail
          _context.DeleteItem( "table", "abc", "789" );
 
          try
@@ -257,8 +258,8 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_TwoOperationsOnSameEntity_ThrowsInvalidOperationException()
       {
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 42 }, "abc", "123" );
-         _context.Update( "table", new DecoratedItem { Id = "abc", Name = "123", Age = 36 }, "abc", "123" );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
+         _context.Update( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "123", Age = 36 } ) );
          try
          {
             _context.Save( Execute.Atomically );
@@ -272,8 +273,8 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_OperationsOnDifferentPartitions_ThrowsInvalidOperationException()
       {
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "foo" }, "abc", "foo" );
-         _context.AddNewItem( "table", new DecoratedItem { Id = "bcd", Name = "foo" }, "bcd", "foo" );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "foo" } ) );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "bcd", Name = "foo" } ) );
          try
          {
             _context.Save( Execute.Atomically );
@@ -289,7 +290,7 @@ namespace TechSmith.Hyde.Test
       {
          for ( int i=0 ; i < 101; ++i )
          {
-            _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "foo" + i }, "abc", "foo" + i );
+            _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "foo" + i } ) );
          }
 
          try
@@ -305,8 +306,8 @@ namespace TechSmith.Hyde.Test
       [TestMethod]
       public void SaveAtomically_OperationsOnDifferentTables_ThrowsInvalidOperationException()
       {
-         _context.AddNewItem( "table", new DecoratedItem { Id = "abc", Name = "foo" }, "abc", "foo" );
-         _context.AddNewItem( "table2", new DecoratedItem { Id = "abc", Name = "bar" }, "abc", "bar" );
+         _context.AddNewItem( "table", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "foo" } ) );
+         _context.AddNewItem( "table2", TableItem.CreateAndThrowOnReservedProperties(new DecoratedItem { Id = "abc", Name = "bar" } ) );
 
          try
          {

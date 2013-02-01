@@ -278,25 +278,25 @@ namespace TechSmith.Hyde.Table.Memory
          return GetEntitiesByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh ).Select( e => e.ConvertToDynamic() );
       }
 
-      public void AddNewItem( string tableName, dynamic itemToAdd, string partitionKey, string rowKey )
+      public void AddNewItem( string tableName, TableItem tableItem )
       {
-         var entity = GenericTableEntity.HydrateFrom( itemToAdd, partitionKey, rowKey );
-         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Add( entity );
-         _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
+         var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Add( genericTableEntity );
+         _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
-      public void Upsert( string tableName, dynamic itemToUpsert, string partitionKey, string rowKey )
+      public void Upsert( string tableName, TableItem tableItem )
       {
-         var entity = GenericTableEntity.HydrateFrom( itemToUpsert, partitionKey, rowKey );
-         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Upsert( entity );
-         _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
+         var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Upsert( genericTableEntity );
+         _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
-      public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
+      public void Update( string tableName, TableItem tableItem )
       {
-         var entity = GenericTableEntity.HydrateFrom( item, partitionKey, rowKey );
-         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( entity.PartitionKey ).Update( entity );
-         _pendingActions.Enqueue( new TableAction( action, partitionKey, rowKey, tableName ) );
+         var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Update( genericTableEntity );
+         _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
@@ -371,7 +371,7 @@ namespace TechSmith.Hyde.Table.Memory
             }
             _tables = resultingTables;
          }
-   }
+      }
 
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
