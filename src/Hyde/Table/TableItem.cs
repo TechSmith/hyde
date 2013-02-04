@@ -26,7 +26,7 @@ namespace TechSmith.Hyde.Table
          private set;
       }
 
-      public TableItem( Dictionary<string, Tuple<object, Type>> properties )
+      private TableItem( Dictionary<string, Tuple<object, Type>> properties )
       {
          Tuple<object, Type> value;
          properties.TryGetValue( TableConstants.PartitionKey, out value );
