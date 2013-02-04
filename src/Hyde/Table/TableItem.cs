@@ -137,10 +137,6 @@ namespace TechSmith.Hyde.Table
          try
          {
             string keyValue = ( (object) item ).ReadPropertyDecoratedWith<T, string>();
-            if (properties.ContainsKey( keyName ))
-            {
-               throw new InvalidEntityException( string.Format( "Entity of type {0} has {1} defined as an attribute and property", item.GetType(), keyName ) );
-            }
             properties[keyName] = new Tuple<object, Type>( keyValue, typeof( string ) );
          }
          catch ( ArgumentException )
