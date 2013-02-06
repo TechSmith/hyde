@@ -18,6 +18,7 @@ namespace TechSmith.Hyde.Test
       {
          InMemoryTableStorageProvider.ResetAllTables();
          _tableStorageProvider = new InMemoryTableStorageProvider();
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = false;
       }
 
       [TestMethod]
@@ -150,6 +151,184 @@ namespace TechSmith.Hyde.Test
          var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
          Assert.AreEqual( "this text is changed.", result.FirstItem );
          Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod]
+      public void AddDynamic_TheDynamicContainPartitionKeyAndRowKey_DynamicIsAddedWithAllProperties()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.PartitionKey = "pk";
+         dyn.RowKey = "rk";
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.AreEqual( "pk", result.PartitionKey );
+         Assert.AreEqual( "rk", result.RowKey );
+         Assert.AreEqual( "this is the first item.", result.FirstItem );
+         Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod]
+      public void AddDynamic_TheDynamicContainPartitionKeyAndRowKeyThatMatchPartionKeyAndRowKeyArguments_DynamicIsAddedWithAllProperties()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.PartitionKey = "pk";
+         dyn.RowKey = "rk";
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.AreEqual( "pk", result.PartitionKey );
+         Assert.AreEqual( "rk", result.RowKey );
+         Assert.AreEqual( "this is the first item.", result.FirstItem );
+         Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void AddDynamic_TheDynamicDoesNotContainPartitionKey_ShouldThrowArgumentException()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.RowKey = "rk";
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void AddDynamic_TheDynamicDoesNotContainRowKey_ShouldThrowArgumentException()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.PartitionKey = "pk";
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void AddDynamic_TheDynamicContainPartitionKeyAndRowKeyThatDoNotMatchPartionKeyAndRowKeyArguments_ShouldThrowArgumentException()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.PartitionKey = "partitionKey";
+         dyn.RowKey = "rowKey";
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( InvalidEntityException ) )]
+      public void AddDynamic_TheDynamicContainsReservedPropertyAndShouldThrowForReservedPropertyNamesIsTrue_ShouldThrowInvalidEntityException()
+      {
+         _tableStorageProvider.ShouldThrowForReservedPropertyNames = true;
+         dynamic dyn = new ExpandoObject();
+         dyn.PartitionKey = "pk";
+
+         _tableStorageProvider.Add( _tableName, dyn );
+      }
+
+      [TestMethod]
+      public void UpdateDynamic_TheDynamicContainsPartitionAndRowKey_DynamicIsUpdatedProperly()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.PartitionKey = "pk";
+         dyn.RowKey = "rk";
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn );
+         _tableStorageProvider.Save();
+         dyn.FirstItem = "this text is changed.";
+         _tableStorageProvider.Update( _tableName, dyn );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.AreEqual( "pk", result.PartitionKey );
+         Assert.AreEqual( "rk", result.RowKey );
+         Assert.AreEqual( "this text is changed.", result.FirstItem );
+         Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod]
+      public void UpdateDynamic_TheDynamicContainPartitionKeyAndRowKeyThatMatchPartionKeyAndRowKeyArguments_DynamicIsUpdatedProperly()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.PartitionKey = "pk";
+         dyn.RowKey = "rk";
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn );
+         _tableStorageProvider.Save();
+         dyn.FirstItem = "this text is changed.";
+         _tableStorageProvider.Update( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.AreEqual( "pk", result.PartitionKey );
+         Assert.AreEqual( "rk", result.RowKey );
+         Assert.AreEqual( "this text is changed.", result.FirstItem );
+         Assert.AreEqual( 2, result.SecondItem );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void UpdateDynamic_TheDynamicContainPartitionKeyAndRowKeyThatDoNotMatchPartionKeyAndRowKeyArguments_ShouldThrowArgumentException()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.PartitionKey = "pk";
+         dyn.RowKey = "rk";
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn );
+         _tableStorageProvider.Save();
+         dyn.FirstItem = "this text is changed.";
+         _tableStorageProvider.Update( _tableName, dyn, "partionKey", "rowKey" );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void UpdateDynamic_TheDynamicDoesNotContainPartitionKey_ShouldThrowArgumentException()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.RowKey = "rk";
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+         dyn.FirstItem = "this text is changed.";
+         _tableStorageProvider.Update( _tableName, dyn );
+         _tableStorageProvider.Save();
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void UpdateDynamic_TheDynamicDoesNotContainRowKey_ShouldThrowArgumentException()
+      {
+         dynamic dyn = new ExpandoObject();
+         dyn.PartitionKey = "pk";
+         dyn.FirstItem = "this is the first item.";
+         dyn.SecondItem = 2;
+
+         _tableStorageProvider.Add( _tableName, dyn, "pk", "rk" );
+         _tableStorageProvider.Save();
+         dyn.FirstItem = "this text is changed.";
+         _tableStorageProvider.Update( _tableName, dyn );
+         _tableStorageProvider.Save();
       }
 
       [TestMethod]

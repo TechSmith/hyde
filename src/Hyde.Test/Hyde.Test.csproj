@@ -98,6 +98,7 @@
     <Compile Include="GenericTableEntityTests.cs" />
     <Compile Include="MemoryTableContextTest.cs" />
     <Compile Include="ObjectExtensionsTest.cs" />
+    <Compile Include="TableItemTest.cs" />
     <Compile Include="TableStorageProviderTests.cs" />
     <Compile Include="NullableSimpleType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
