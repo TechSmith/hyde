@@ -14,8 +14,6 @@ namespace TechSmith.Hyde.Table.Azure
    {
       private IDictionary<string, EntityProperty> _properties;
 
-      private static readonly HashSet<string> _invalidPropertyNames = new HashSet<string> { "PartitionKey", "RowKey", "Timestamp", "ETag" };
-
       private static readonly Dictionary<Type, Func<EntityProperty, object>> _typeToValueFunctions = new Dictionary<Type, Func<EntityProperty, object>>
         {
            { typeof( string ), p => p.StringValue },
@@ -105,70 +103,38 @@ namespace TechSmith.Hyde.Table.Azure
          return new Dictionary<string, EntityProperty>( _properties );
       }
 
-      public static GenericTableEntity HydrateFrom( dynamic sourceItem, string partitionKey, string rowKey )
+      public static GenericTableEntity HydrateFrom( TableItem tableItem )
       {
-         Dictionary<string, EntityProperty> properties = GetProperties( sourceItem );
+         Dictionary<string, EntityProperty> properties = GetProperties( tableItem.Properties );
 
          var genericEntity = new GenericTableEntity();
-         if ( properties != null )
+         foreach ( KeyValuePair<string, EntityProperty> keyValuePair in properties )
          {
-            foreach ( KeyValuePair<string, EntityProperty> keyValuePair in properties )
-            {
-               if ( _invalidPropertyNames.Contains( keyValuePair.Key ) )
-               {
-                  throw new InvalidEntityException( string.Format( "Invalid property name {0}", keyValuePair.Key ) );
-               }
-               genericEntity._properties.Add( keyValuePair.Key, keyValuePair.Value );
-            }
+            genericEntity._properties.Add( keyValuePair.Key, keyValuePair.Value );
          }
 
-         genericEntity.PartitionKey = partitionKey;
-         genericEntity.RowKey = rowKey;
+         genericEntity.PartitionKey = tableItem.PartitionKey;
+         genericEntity.RowKey = tableItem.RowKey;
 
          return genericEntity;
       }
 
-      private static Dictionary<string, EntityProperty> GetProperties( dynamic item )
+      private static Dictionary<string, EntityProperty> GetProperties( Dictionary<string, Tuple<object, Type>> properties )
       {
-         if ( item is IDynamicMetaObjectProvider )
+         var entityProperties = new Dictionary<string, EntityProperty>();
+         foreach ( KeyValuePair<string, Tuple<object, Type>> property in properties )
          {
-            return GetPropertiesFromDynamicMetaObject( item );
-         }
-         return GetPropertiesFromType( item );
-      }
-
-      private static Dictionary<string, EntityProperty> GetPropertiesFromDynamicMetaObject( IDynamicMetaObjectProvider item )
-      {
-         var properties = new Dictionary<string, EntityProperty>();
-         IEnumerable<string> memberNames = ImpromptuInterface.Impromptu.GetMemberNames( item );
-         foreach ( var memberName in memberNames )
-         {
-            dynamic result = ImpromptuInterface.Impromptu.InvokeGet( item, memberName );
-            Func<object, EntityProperty> objectToEntityPropertyConverter = _typeToEntityPropertyFunctions[result.GetType()];
-            properties[memberName] = objectToEntityPropertyConverter( result );
-         }
-         return properties;
-      }
-
-      private static Dictionary<string, EntityProperty> GetPropertiesFromType<T>( T item )
-      {
-         var properties = new Dictionary<string, EntityProperty>();
-         foreach ( var property in item.GetType().GetProperties().Where( p => p.ShouldSerialize() ) )
-         {
-            if ( _invalidPropertyNames.Contains( property.Name ) )
+            Type propertyType = property.Value.Item2;
+            if ( !_typeToEntityPropertyFunctions.ContainsKey( propertyType ) )
             {
-               throw new InvalidEntityException( string.Format( "Invalid property name {0}", property.Name ) );
-            }
-            if ( !_typeToEntityPropertyFunctions.ContainsKey( property.PropertyType ) )
-            {
-               throw new NotSupportedException( "The type " + property.PropertyType + " is not supported." );
+               throw new NotSupportedException( "The type " + propertyType + " is not supported." );
             }
 
-            Func<object, EntityProperty> objectToEntityPropertyConverter = _typeToEntityPropertyFunctions[property.PropertyType];
-            var valueOfProperty = property.GetValue( item, null );
-            properties[property.Name] = objectToEntityPropertyConverter( valueOfProperty );
+            Func<object, EntityProperty> objectToEntityPropertyConverter = _typeToEntityPropertyFunctions[propertyType];
+            entityProperties[property.Key] = objectToEntityPropertyConverter( property.Value.Item1 );
          }
-         return properties;
+
+         return entityProperties;
       }
 
       public dynamic ConvertToDynamic()
@@ -215,7 +181,7 @@ namespace TechSmith.Hyde.Table.Azure
 
       private void SetPropertyOnObject<T>( PropertyInfo typeProperty, T newItem ) where T : new()
       {
-         if ( _invalidPropertyNames.Contains( typeProperty.Name ) )
+         if ( TableConstants.ReservedPropertyNames.Contains( typeProperty.Name ) )
          {
             return;
          }

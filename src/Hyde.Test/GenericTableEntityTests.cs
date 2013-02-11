@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Dynamic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.Storage.Table;
+using TechSmith.Hyde.Table;
 using TechSmith.Hyde.Table.Azure;
 
 namespace TechSmith.Hyde.Test
@@ -19,7 +19,9 @@ namespace TechSmith.Hyde.Test
                              SecondType = 0
                           };
 
-         var genericItemToTest = GenericTableEntity.HydrateFrom( itemToSave, "pk", "rk" );
+         TableItem tableItem = TableItem.Create( itemToSave, "pk", "rk" );
+
+         var genericItemToTest = GenericTableEntity.HydrateFrom( tableItem );
 
 
          var wereCool = true;
@@ -43,7 +45,8 @@ namespace TechSmith.Hyde.Test
                              Name = "name",
                              Age = 42,
                           };
-         var genericEntity = GenericTableEntity.HydrateFrom( itemToSave, itemToSave.Id, itemToSave.Name );
+         TableItem tableItem = TableItem.Create( itemToSave );
+         var genericEntity = GenericTableEntity.HydrateFrom( tableItem );
 
          Assert.AreEqual( "id", genericEntity.PartitionKey, "incorrect partition key" );
          Assert.AreEqual( "name", genericEntity.RowKey, "incorrect row key" );
@@ -75,8 +78,9 @@ namespace TechSmith.Hyde.Test
                              SerializedString = "foo",
                              NotSerializedString = "bar"
                           };
+         TableItem tableItem = TableItem.Create( itemToSave, "pk", "rk" );
 
-         var genericItemToTest = GenericTableEntity.HydrateFrom( itemToSave, "pk", "rk" );
+         var genericItemToTest = GenericTableEntity.HydrateFrom( tableItem );
 
 
          var wereCool = true;
@@ -105,7 +109,9 @@ namespace TechSmith.Hyde.Test
          itemToSave.FirstType = "foo";
          itemToSave.SecondType = "bar";
 
-         GenericTableEntity genericItemToTest = GenericTableEntity.HydrateFrom( itemToSave, "pk", "rk" );
+         TableItem tableItem = TableItem.Create( itemToSave, "pk", "rk" );
+
+         var genericItemToTest = GenericTableEntity.HydrateFrom( tableItem );
 
          var wereCool = true;
 

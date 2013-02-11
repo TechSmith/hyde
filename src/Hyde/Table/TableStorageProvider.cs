@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using TechSmith.Hyde.Common;
-using TechSmith.Hyde.Common.DataAnnotations;
 
 namespace TechSmith.Hyde.Table
 {
@@ -14,16 +12,35 @@ namespace TechSmith.Hyde.Table
          _context = context;
       }
 
+      private TableItem.ReservedPropertyBehavior _reservedPropertyBehavior = TableItem.ReservedPropertyBehavior.Throw;
+      /// <summary>
+      /// Sets how reserved property names are handled.  The default is true.
+      /// If true an InvalidEntityException will be thrown when reserved property names are encountered.
+      /// If false the PartitionKey and RowKey properties will be used when available, ignoring all other reserved properties.
+      /// The reserved properties are "PartitionKey", "RowKey", "Timestamp", and "ETag".
+      /// </summary>
+      public bool ShouldThrowForReservedPropertyNames
+      {
+         get
+         {
+            return _reservedPropertyBehavior == TableItem.ReservedPropertyBehavior.Throw ? true : false;
+         }
+         set
+         {
+            _reservedPropertyBehavior = value ? TableItem.ReservedPropertyBehavior.Throw : TableItem.ReservedPropertyBehavior.Ignore;
+         }
+      }
+
       /// <summary>
       /// Add entity to the given table
       /// </summary>
       /// <param name="tableName">Name of the table</param>
-      /// <param name="entity">Entity to store</param>
+      /// <param name="instance">the instance to store</param>
       /// <param name="partitionKey">The partition key to use when storing the entity</param>
       /// <param name="rowKey">The row key to use when storing the entity</param>
-      public void Add( string tableName, dynamic entity, string partitionKey, string rowKey )
+      public void Add( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
-         _context.AddNewItem( tableName, entity, partitionKey, rowKey );
+         _context.AddNewItem( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
       }
 
       /// <summary>
@@ -36,13 +53,10 @@ namespace TechSmith.Hyde.Table
       /// PartitionKeyAttribute and RowKeyAttribute, which the framework uses to determine
       /// the partition and row keys for instance.
       /// </remarks>
-      /// <exception cref="ArgumentException">if T does not have properties decorated with PartitionKey and RowKey</exception>
+      /// <exception cref="ArgumentException">if T does not have properties PartitionKey and or RowKey</exception>
       public void Add( string tableName, dynamic instance )
       {
-         var partitionKey = ((object)instance).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         var rowKey = ((object)instance).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
-
-         Add( tableName, instance, partitionKey, rowKey );
+         _context.AddNewItem( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
       }
 
       public T Get<T>( string tableName, string partitionKey, string rowKey ) where T : new()
@@ -106,7 +120,7 @@ namespace TechSmith.Hyde.Table
       {
          return _context.GetRangeByRowKey<T>( tableName, partitionKey, rowKeyLow, rowKeyHigh );
       }
-      
+
       public IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
       {
          return _context.GetRangeByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh );
@@ -124,22 +138,18 @@ namespace TechSmith.Hyde.Table
 
       public void Upsert( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
-         _context.Upsert( tableName, instance, partitionKey, rowKey );
+         _context.Upsert( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
       }
 
       public void Upsert( string tableName, dynamic instance )
       {
-         var partitionKey = ((object)instance).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         var rowKey = ((object)instance).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
-
-         Upsert( tableName, instance, partitionKey, rowKey );
+         _context.Upsert( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
       }
 
       public void Delete( string tableName, dynamic instance )
       {
-         var partitionKey = ((object)instance).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         var rowKey = ((object)instance).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
-         Delete( tableName, partitionKey, rowKey );
+         TableItem tableItem = TableItem.Create( instance, _reservedPropertyBehavior );
+         Delete( tableName, tableItem.PartitionKey, tableItem.RowKey );
       }
 
       public void Delete( string tableName, string partitionKey, string rowKey )
@@ -152,17 +162,14 @@ namespace TechSmith.Hyde.Table
          _context.DeleteCollection( tableName, partitionKey );
       }
 
-      public void Update( string tableName, dynamic item, string partitionKey, string rowKey )
+      public void Update( string tableName, dynamic instance, string partitionKey, string rowKey )
       {
-         _context.Update( tableName, item, partitionKey, rowKey );
+         _context.Update( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
       }
 
-      public void Update( string tableName, dynamic item )
+      public void Update( string tableName, dynamic instance )
       {
-         var partitionKey = ((object)item).ReadPropertyDecoratedWith<PartitionKeyAttribute, string>();
-         var rowKey = ((object)item).ReadPropertyDecoratedWith<RowKeyAttribute, string>();
-
-         Update( tableName, item, partitionKey, rowKey );
+         _context.Update( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
       }
    }
 }
