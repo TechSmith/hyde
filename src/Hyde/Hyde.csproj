@@ -89,6 +89,7 @@
     <Compile Include="Table\Azure\ExecutableTableOperation.cs" />
     <Compile Include="ICloudStorageAccount.cs" />
     <Compile Include="Table\Azure\GenericTableEntity.cs" />
+    <Compile Include="Table\Query.cs" />
     <Compile Include="Table\TableItem.cs" />
     <Compile Include="Table\Execute.cs" />
     <Compile Include="Table\InMemoryTableStorageProvider.cs" />
@@ -99,7 +100,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Common\PropertyInfoExtensions.cs" />
     <Compile Include="Common\DataAnnotations\RowKeyAttribute.cs" />
-    <Compile Include="Table\DefaultQuery.cs" />
     <Compile Include="Table\Memory\MemoryTableContext.cs" />
     <Compile Include="Table\TableConstants.cs" />
     <Compile Include="Table\TableStorageProvider.cs" />
