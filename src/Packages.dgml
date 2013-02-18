@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<DirectedGraph GraphDirection="LeftToRight" xmlns="http://schemas.microsoft.com/vs/2009/dgml">
+  <Nodes>
+    <Node Id="Hyde.IntegrationTest" Label="Hyde.IntegrationTest" Category="Project" />
+    <Node Id="Microsoft.Data.Edm 5.2.0" Label="Microsoft.Data.Edm 5.2.0" Category="Package" />
+    <Node Id="Microsoft.Data.OData 5.2.0" Label="Microsoft.Data.OData 5.2.0" Category="Package" />
+    <Node Id="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Label="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Category="Package" />
+    <Node Id="System.Spatial 5.2.0" Label="System.Spatial 5.2.0" Category="Package" />
+    <Node Id="WindowsAzure.Storage 2.0.3.0" Label="WindowsAzure.Storage 2.0.3.0" Category="Package" />
+    <Node Id="Hyde" Label="Hyde" Category="Project" />
+    <Node Id="ImpromptuInterface 6.0.6" Label="ImpromptuInterface 6.0.6" Category="Package" />
+    <Node Id="Microsoft.Data.Edm 5.2.0" Label="Microsoft.Data.Edm 5.2.0" Category="Package" />
+    <Node Id="Microsoft.Data.OData 5.2.0" Label="Microsoft.Data.OData 5.2.0" Category="Package" />
+    <Node Id="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Label="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Category="Package" />
+    <Node Id="System.Spatial 5.2.0" Label="System.Spatial 5.2.0" Category="Package" />
+    <Node Id="WindowsAzure.Storage 2.0.3.0" Label="WindowsAzure.Storage 2.0.3.0" Category="Package" />
+    <Node Id="Hyde.Test" Label="Hyde.Test" Category="Project" />
+    <Node Id="CommonServiceLocator 1.0" Label="CommonServiceLocator 1.0" Category="Package" />
+    <Node Id="Microsoft.Data.Edm 5.2.0" Label="Microsoft.Data.Edm 5.2.0" Category="Package" />
+    <Node Id="Microsoft.Data.OData 5.2.0" Label="Microsoft.Data.OData 5.2.0" Category="Package" />
+    <Node Id="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Label="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Category="Package" />
+    <Node Id="Moq 4.0.10827" Label="Moq 4.0.10827" Category="Package" />
+    <Node Id="NUnit 2.6.1" Label="NUnit 2.6.1" Category="Package" />
+    <Node Id="System.Spatial 5.2.0" Label="System.Spatial 5.2.0" Category="Package" />
+    <Node Id="Unity 2.1.505.2" Label="Unity 2.1.505.2" Category="Package" />
+    <Node Id="WindowsAzure.Storage 2.0.3.0" Label="WindowsAzure.Storage 2.0.3.0" Category="Package" />
+  </Nodes>
+  <Links>
+    <Link Source="Microsoft.Data.OData 5.2.0" Target="System.Spatial 5.2.0" Category="Package Dependency" />
+    <Link Source="Microsoft.Data.OData 5.2.0" Target="Microsoft.Data.Edm 5.2.0" Category="Package Dependency" />
+    <Link Source="WindowsAzure.Storage 2.0.3.0" Target="Microsoft.Data.OData 5.2.0" Category="Package Dependency" />
+    <Link Source="WindowsAzure.Storage 2.0.3.0" Target="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Category="Package Dependency" />
+    <Link Source="Hyde.IntegrationTest" Target="Microsoft.Data.Edm 5.2.0" Category="Installed Package" />
+    <Link Source="Hyde.IntegrationTest" Target="Microsoft.Data.OData 5.2.0" Category="Installed Package" />
+    <Link Source="Hyde.IntegrationTest" Target="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Category="Installed Package" />
+    <Link Source="Hyde.IntegrationTest" Target="System.Spatial 5.2.0" Category="Installed Package" />
+    <Link Source="Hyde.IntegrationTest" Target="WindowsAzure.Storage 2.0.3.0" Category="Installed Package" />
+    <Link Source="Microsoft.Data.OData 5.2.0" Target="System.Spatial 5.2.0" Category="Package Dependency" />
+    <Link Source="Microsoft.Data.OData 5.2.0" Target="Microsoft.Data.Edm 5.2.0" Category="Package Dependency" />
+    <Link Source="WindowsAzure.Storage 2.0.3.0" Target="Microsoft.Data.OData 5.2.0" Category="Package Dependency" />
+    <Link Source="WindowsAzure.Storage 2.0.3.0" Target="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Category="Package Dependency" />
+    <Link Source="Hyde" Target="ImpromptuInterface 6.0.6" Category="Installed Package" />
+    <Link Source="Hyde" Target="Microsoft.Data.Edm 5.2.0" Category="Installed Package" />
+    <Link Source="Hyde" Target="Microsoft.Data.OData 5.2.0" Category="Installed Package" />
+    <Link Source="Hyde" Target="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Category="Installed Package" />
+    <Link Source="Hyde" Target="System.Spatial 5.2.0" Category="Installed Package" />
+    <Link Source="Hyde" Target="WindowsAzure.Storage 2.0.3.0" Category="Installed Package" />
+    <Link Source="Microsoft.Data.OData 5.2.0" Target="System.Spatial 5.2.0" Category="Package Dependency" />
+    <Link Source="Microsoft.Data.OData 5.2.0" Target="Microsoft.Data.Edm 5.2.0" Category="Package Dependency" />
+    <Link Source="Unity 2.1.505.2" Target="CommonServiceLocator 1.0" Category="Package Dependency" />
+    <Link Source="WindowsAzure.Storage 2.0.3.0" Target="Microsoft.Data.OData 5.2.0" Category="Package Dependency" />
+    <Link Source="WindowsAzure.Storage 2.0.3.0" Target="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Category="Package Dependency" />
+    <Link Source="Hyde.Test" Target="Microsoft.Data.Edm 5.2.0" Category="Installed Package" />
+    <Link Source="Hyde.Test" Target="Microsoft.Data.OData 5.2.0" Category="Installed Package" />
+    <Link Source="Hyde.Test" Target="Microsoft.WindowsAzure.ConfigurationManager 1.8.0.0" Category="Installed Package" />
+    <Link Source="Hyde.Test" Target="Moq 4.0.10827" Category="Installed Package" />
+    <Link Source="Hyde.Test" Target="NUnit 2.6.1" Category="Installed Package" />
+    <Link Source="Hyde.Test" Target="System.Spatial 5.2.0" Category="Installed Package" />
+    <Link Source="Hyde.Test" Target="Unity 2.1.505.2" Category="Installed Package" />
+    <Link Source="Hyde.Test" Target="WindowsAzure.Storage 2.0.3.0" Category="Installed Package" />
+  </Links>
+  <Categories>
+    <Category Id="Project" />
+    <Category Id="Package" />
+  </Categories>
+  <Styles>
+    <Style TargetType="Node" GroupLabel="Project" ValueLabel="True">
+      <Condition Expression="HasCategory('Project')" />
+      <Setter Property="Background" Value="Blue" />
+    </Style>
+    <Style TargetType="Link" GroupLabel="Package Dependency" ValueLabel="True">
+      <Condition Expression="HasCategory('Package Dependency')" />
+      <Setter Property="Background" Value="Yellow" />
+    </Style>
+  </Styles>
+</DirectedGraph>

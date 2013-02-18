@@ -13888,6 +13888,11 @@
             The query select clause name.
             </summary>
         </member>
+        <member name="F:Microsoft.WindowsAzure.Storage.Table.Protocol.TableConstants.MinDateTime">
+            <summary>
+            The minimum DateTime supported.
+            </summary> 
+        </member>
         <member name="T:Microsoft.WindowsAzure.Storage.Table.Protocol.TableErrorCodeStrings">
             <summary>
             Provides error code strings that are specific to the Windows Azure Table service.

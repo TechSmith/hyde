@@ -5,11 +5,26 @@ namespace TechSmith.Hyde.Table
 {
    public abstract class TableStorageProvider
    {
+      // The maximum key value for a partition or row key is the largest unicode-16 character (\uFFFF) repeated 1024 times.
+      public readonly string MaximumKeyValue;
+      public const char HighestTableStorageUnicodeCharacter = '\uFFFF';
+
+      // The minimum key value for a partition or row key is a single space character ' '
+      public readonly string MinimumKeyValue = new string( new[] { LowestTableStorageUnicodeCharacter } );
+      public const char LowestTableStorageUnicodeCharacter = '\u0020';
+
       private readonly ITableContext _context;
 
       protected TableStorageProvider( ITableContext context )
       {
          _context = context;
+
+         var charArray = new char[1024];
+         for ( int i = 0; i < charArray.Length; i++ )
+         {
+            charArray[ i ] = HighestTableStorageUnicodeCharacter;
+         }
+         MaximumKeyValue = new string( charArray );
       }
 
       private TableItem.ReservedPropertyBehavior _reservedPropertyBehavior = TableItem.ReservedPropertyBehavior.Throw;
@@ -69,7 +84,7 @@ namespace TechSmith.Hyde.Table
          return _context.GetItem( tableName, partitionKey, rowKey );
       }
 
-      public IEnumerable<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
+      public IQuery<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
          return _context.GetCollection<T>( tableName, partitionKey );
       }
@@ -85,7 +100,7 @@ namespace TechSmith.Hyde.Table
       /// <typeparam name="T">type of the instances to return</typeparam>
       /// <param name="tableName">name of the table</param>
       /// <returns>all rows in tableName</returns>
-      public IEnumerable<T> GetCollection<T>( string tableName ) where T : new()
+      public IQuery<T> GetCollection<T>( string tableName ) where T : new()
       {
          return _context.GetCollection<T>( tableName );
       }
@@ -95,7 +110,7 @@ namespace TechSmith.Hyde.Table
       /// </summary>
       /// <param name="tableName">name of the table</param>
       /// <returns>all rows in tableName</returns>
-      public IEnumerable<dynamic> GetCollection( string tableName )
+      public IQuery<dynamic> GetCollection( string tableName )
       {
          return _context.GetCollection( tableName );
       }
@@ -106,22 +121,22 @@ namespace TechSmith.Hyde.Table
          return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
       }
 
-      public IEnumerable<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
+      public IQuery<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
          return _context.GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
       }
 
-      public IEnumerable<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
+      public IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
       {
          return _context.GetRangeByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh );
       }
 
-      public IEnumerable<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
+      public IQuery<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
       {
          return _context.GetRangeByRowKey<T>( tableName, partitionKey, rowKeyLow, rowKeyHigh );
       }
 
-      public IEnumerable<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
+      public IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
       {
          return _context.GetRangeByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh );
       }

@@ -1201,6 +1201,49 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.IsFalse( results.Any( i => i.Name == "three" ) );
       }
 
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void GetCollection_ManyItemsInStore_TakeMethodReturnsProperAmount()
+      {
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "a" }, _partitionKey, "a" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "b" }, _partitionKey, "b" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "c" }, _partitionKey, "c" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.GetCollection<TypeWithStringProperty>( _tableName, _partitionKey ).Top( 2 );
+         Assert.AreEqual( 2, result.Count() );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void GetCollection_ManyItemsInStore_MaxKeyValueAllowsUnboundedRangeQuery()
+      {
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "a" }, _partitionKey, "\uFFFF" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "b" }, _partitionKey, "\uFFFF\uFFFF" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "c" }, _partitionKey, "\uFFFF\uFFFF\uFFFF" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, "\uFFFF\uFFFF", _tableStorageProvider.MaximumKeyValue );
+
+         Assert.AreEqual( 2, result.Count() );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      // This test fails on a local emulator but passes against an actual azure storage account.  The correct query is sent by the client, 
+      // but incorrect results are received from the emulator.
+      public void GetCollection_ManyItemsInStore_MinKeyValueAllowsUnboundedRangeQuery()
+      {
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "a" }, _partitionKey, "\u0020" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "b" }, _partitionKey, "\u0020\u0020" );
+         _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "c" }, _partitionKey, "\u0020\u0020\u0020" );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, _tableStorageProvider.MinimumKeyValue, "\u0020\u0020" );
+
+         Assert.AreEqual( 2, result.Count() );
+      }
+
       private void EnsureOneItemInTableStorage()
       {
          var item = new TypeWithStringProperty
@@ -1217,7 +1260,5 @@ namespace TechSmith.Hyde.IntegrationTest
          return dt1.Year == dt2.Year && dt1.Month == dt2.Month && dt1.Day == dt2.Day && dt1.Hour == dt2.Hour && dt1.Minute == dt2.Minute
                 && dt1.Second == dt2.Second && dt1.Kind == dt2.Kind;
       }
-
-      // TODO: Create a test that leverages filters (such as timestamp > or a Take(10)).
    }
 }
