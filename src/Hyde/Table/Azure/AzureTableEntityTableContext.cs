@@ -333,12 +333,6 @@ namespace TechSmith.Hyde.Table.Azure
          return (GenericTableEntity)result.Result;
       }
 
-      private IEnumerable<dynamic> ExecuteFilterOnTable( string tableName, string filter )
-      {
-         var query = new TableQuery<GenericTableEntity>().Where( filter );
-         return Table( tableName ).ExecuteQuery( query ).Select( e => e.ConvertToDynamic() );
-      }
-
       private CloudTable Table( string tableName )
       {
          return new CloudTableClient( new Uri( _storageAccount.TableEndpoint ), _storageAccount.Credentials ).GetTableReference( tableName );
