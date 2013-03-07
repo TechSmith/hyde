@@ -22,6 +22,7 @@ namespace TechSmith.Hyde.Table
       void AddNewItem( string tableName, TableItem tableItem );
       void Upsert( string tableName, TableItem tableItem );
       void Update( string tableName, TableItem tableItem );
+      void Merge( string tableName, TableItem tableItem );
 
       // Shared implementation between generics and dynamics.
       void DeleteItem( string tableName, string partitionKey, string rowKey );

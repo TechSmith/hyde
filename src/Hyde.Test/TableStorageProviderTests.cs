@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Data.Services.Client;
+using System.Dynamic;
 using System.Globalization;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -901,6 +902,35 @@ namespace TechSmith.Hyde.Test
          var result = secondStorageProvider.Get<SimpleDataItem>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( "first", result.FirstType );
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( EntityDoesNotExistException ) )]
+      public void Merge_ItemDoesNotExist_ShouldThrowEntityDoesNotExistException()
+      {
+         _tableStorageProvider.Merge( _tableName, new SimpleDataItem { FirstType = "first" }, "not", "found" );
+         _tableStorageProvider.Save();
+      }
+
+      [TestMethod]
+      public void Merge_ItemExistsAndOnePropertyOverwritten_WrittenPropertyHasNewValueAndUnwrittenPropertiesRetainValues()
+      {
+         dynamic item = new ExpandoObject();
+         item.Height = 50;
+         item.Name = "Bill";
+
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         dynamic update = new ExpandoObject();
+         update.Height = 60;
+         _tableStorageProvider.Merge( _tableName, update, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         dynamic updatedItem = _tableStorageProvider.Get( _tableName, _partitionKey, _rowKey );
+
+         Assert.AreEqual( 60, updatedItem.Height );
+         Assert.AreEqual( item.Name, updatedItem.Name );
       }
 
       [TestMethod]

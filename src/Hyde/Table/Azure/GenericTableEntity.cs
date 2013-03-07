@@ -103,6 +103,11 @@ namespace TechSmith.Hyde.Table.Azure
          return new Dictionary<string, EntityProperty>( _properties );
       }
 
+      public void SetProperty( string name, EntityProperty newValue )
+      {
+         _properties[name] = newValue;
+      }
+
       public static GenericTableEntity HydrateFrom( TableItem tableItem )
       {
          Dictionary<string, EntityProperty> properties = GetProperties( tableItem.Properties );

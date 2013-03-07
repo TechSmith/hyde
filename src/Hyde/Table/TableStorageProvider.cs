@@ -186,5 +186,15 @@ namespace TechSmith.Hyde.Table
       {
          _context.Update( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
       }
+
+      public void Merge( string tableName, dynamic instance, string partitionKey, string rowKey )
+      {
+         _context.Merge( tableName, TableItem.Create( instance, partitionKey, rowKey, _reservedPropertyBehavior ) );
+      }
+
+      public void Merge( string tableName, dynamic instance )
+      {
+         _context.Merge( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
+      }
    }
 }

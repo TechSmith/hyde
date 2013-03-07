@@ -57,6 +57,23 @@ namespace TechSmith.Hyde.Table.Memory
             }
          }
 
+         public void Merge( GenericTableEntity entity )
+         {
+            lock ( _entities )
+            {
+               if ( !_entities.ContainsKey( entity.RowKey ) )
+               {
+                  throw new EntityDoesNotExistException();
+               }
+
+               var currentEntity = _entities[entity.RowKey];
+               foreach ( var property in entity.WriteEntity( null ) )
+               {
+                  currentEntity.SetProperty( property.Key, property.Value );
+               }
+            }
+         }
+
          public void Delete( string rowKey )
          {
             lock ( _entities )
@@ -296,6 +313,13 @@ namespace TechSmith.Hyde.Table.Memory
       {
          var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
          Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Update( genericTableEntity );
+         _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
+      }
+
+      public void Merge( string tableName, TableItem tableItem )
+      {
+         var genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         Action<StorageAccount> action = tables => tables.GetTable( tableName ).GetPartition( tableItem.PartitionKey ).Merge( genericTableEntity );
          _pendingActions.Enqueue( new TableAction( action, tableItem.PartitionKey, tableItem.RowKey, tableName ) );
       }
 

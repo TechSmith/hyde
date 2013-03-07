@@ -127,6 +127,15 @@ namespace TechSmith.Hyde.Table.Azure
          _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Replace, tableItem.PartitionKey, tableItem.RowKey ) );
       }
 
+      public void Merge( string tableName, TableItem tableItem )
+      {
+         GenericTableEntity genericTableEntity = GenericTableEntity.HydrateFrom( tableItem );
+         genericTableEntity.ETag = "*";
+
+         var operation = TableOperation.Merge( genericTableEntity );
+         _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Merge, tableItem.PartitionKey, tableItem.RowKey ) );
+      }
+
       public void DeleteItem( string tableName, string partitionKey, string rowKey )
       {
          var operation = TableOperation.Delete( new GenericTableEntity
