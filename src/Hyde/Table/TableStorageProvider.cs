@@ -89,7 +89,7 @@ namespace TechSmith.Hyde.Table
          return _context.GetCollection<T>( tableName, partitionKey );
       }
 
-      public IEnumerable<dynamic> GetCollection( string tableName, string partitionKey )
+      public IQuery<dynamic> GetCollection( string tableName, string partitionKey )
       {
          return _context.GetCollection( tableName, partitionKey );
       }
