@@ -155,6 +155,27 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void GetRangeByRowKey_ItemsInRange_ReturnsItems()
+      {
+         var items = new[]
+                     {
+                        new DecoratedItem { Id = "abc", Name = "123", Age = 42 },
+                        new DecoratedItem { Id = "abc", Name = "456", Age = 43 },
+                        new DecoratedItem { Id = "bcd", Name = "456", Age = 44 },
+                     };
+         foreach ( var item in items )
+         {
+            _context.AddNewItem( "table", TableItem.Create( item ) );
+         }
+         _context.Save( Execute.Individually );
+
+         var tsp = new InMemoryTableStorageProvider();
+         var result = _context.GetRangeByRowKey( "table", "abc", tsp.MinimumKeyValue, tsp.MaximumKeyValue );
+
+         Assert.AreEqual( 2, result.Count() );
+      }
+
+      [TestMethod]
       public void Upsert_EntityDoesNotExist_EntityCreatedOnSave()
       {
          _context.Upsert( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
