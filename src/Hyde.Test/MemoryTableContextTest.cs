@@ -176,6 +176,27 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void GetRangeByPartitionKey_ItemsInRange_ReturnsItems()
+      {
+         var items = new[]
+                     {
+                        new DecoratedItem { Id = "abc", Name = "123", Age = 42 },
+                        new DecoratedItem { Id = "abd", Name = "456", Age = 43 },
+                        new DecoratedItem { Id = "bcd", Name = "556", Age = 44 },
+                     };
+         foreach ( var item in items )
+         {
+            _context.AddNewItem( "table", TableItem.Create( item ) );
+         }
+         _context.Save( Execute.Individually );
+
+         var tsp = new InMemoryTableStorageProvider();
+         var result = _context.GetRangeByPartitionKey( "table", tsp.MinimumKeyValue, "bcc" );
+
+         Assert.AreEqual( 2, result.Count() );
+      }
+
+      [TestMethod]
       public void Upsert_EntityDoesNotExist_EntityCreatedOnSave()
       {
          _context.Upsert( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );

@@ -249,7 +249,9 @@ namespace TechSmith.Hyde.Table.Memory
       private IEnumerable<GenericTableEntity> GetEntitiesByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
       {
          var entities = _tables.GetTable( tableName ).GetAllPartitions().SelectMany( p => p.GetAll() );
-         Func<string,bool> isInRange = pk => pk.CompareTo( partitionKeyLow ) >= 0 && pk.CompareTo( partitionKeyHigh ) <= 0;
+         Func<string,bool> isInRange = 
+            pk => String.Compare(pk, partitionKeyLow, StringComparison.Ordinal) >= 0 && 
+                  String.Compare(pk, partitionKeyHigh, StringComparison.Ordinal) <= 0;
          return entities.Where( e => isInRange( e.PartitionKey ) ).OrderBy( e => e.PartitionKey ).ThenBy( e => e.RowKey );
       }
 
