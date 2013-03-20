@@ -1,35 +1,27 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.WindowsAzure.Storage.Table;
+﻿using Microsoft.WindowsAzure.Storage.Table;
 
 namespace TechSmith.Hyde.Table.Azure
 {
-   public class AzureDynamicQuery : IQuery<object>
+   public class AzureDynamicQuery : AbstractAzureQuery<object>
    {
-      private readonly CloudTable _table;
-      private TableQuery<GenericTableEntity> _query;
-
-      public AzureDynamicQuery( CloudTable table, string filter )
+      public AzureDynamicQuery( CloudTable table )
+         : base( table )
       {
-         _table = table;
-         _query = new TableQuery<GenericTableEntity>().Where( filter );
       }
 
-      public IQuery<object> Top( int count )
+      private AzureDynamicQuery( AzureDynamicQuery previous )
+         : base( previous )
       {
-         _query = _query.Take( count );
-         return this;
       }
 
-      public IEnumerator<object> GetEnumerator()
+      protected override AbstractQuery<object> CreateCopy()
       {
-         return _table.ExecuteQuery( _query ).Select( e => e.ConvertToDynamic() ).GetEnumerator();
+         return new AzureDynamicQuery( this );
       }
 
-      IEnumerator IEnumerable.GetEnumerator()
+      internal override object ConvertResult( GenericTableEntity e )
       {
-         return GetEnumerator();
+         return e.ConvertToDynamic();
       }
    }
 }

@@ -20,70 +20,50 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      [ExpectedException( typeof( EntityDoesNotExistException ) )]
-      public void GetItem_ItemNotFound_ThrowsEntityNotFoundException()
-      {
-         _context.GetItem<DecoratedItem>( "foo", "pk", "rk" );
-      }
-
-      [TestMethod]
-      public void GetItem_ItemAddedButSaveNotCalled_ThrowsEntityDoesNotExistException()
+      public void CreateQuery_ItemAddedButSaveNotCalled_EntityNotReturnedByQuery()
       {
          _context.AddNewItem( "table", TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 50 } ) );
-         try
-         {
-            _context.GetItem<DecoratedItem>( "table", "abc", "123" );
-            Assert.Fail( "Should have thrown exception" );
-         }
-         catch ( EntityDoesNotExistException )
-         {
-         }
+         Assert.IsNull( _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault() );
       }
 
       [TestMethod]
-      public void Save_ItemAdded_GetItemReturnsTheItem()
+      public void Save_ItemAdded_QueryReturnsTheItem()
       {
          var item = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
          var entity = TableItem.Create( item );
          _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
 
-         var returnedItem = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
+         var returnedItem = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
          Assert.AreEqual( item.Id, returnedItem.Id );
          Assert.AreEqual( item.Name, returnedItem.Name );
          Assert.AreEqual( item.Age, returnedItem.Age );
       }
 
       [TestMethod]
-      public void GetItem_ItemAddedAndSavedWithDifferentContext_ReturnsItem()
+      public void CreateQuery_ItemAddedAndSavedWithDifferentContext_ReturnsItem()
       {
          var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
          var entity = TableItem.Create( addedItem );
          _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
 
-         var returnedItem = new MemoryTableContext().GetItem<DecoratedItem>( "table", "abc", "123" );
+         var returnedItem = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
          Assert.AreEqual( addedItem.Id, returnedItem.Id );
          Assert.AreEqual( addedItem.Name, returnedItem.Name );
          Assert.AreEqual( addedItem.Age, returnedItem.Age );
       }
 
       [TestMethod]
-      public void GetItem_ItemAddedToDifferentTable_ThrowsEntityDoesNotExistException()
+      public void CreateQuery_ItemAddedToDifferentTable_QueryDoesNotReturnEntity()
       {
          var addedItem = new DecoratedItem { Id = "abc", Name = "123", Age = 50 };
          var entity = TableItem.Create( addedItem );
          _context.AddNewItem( "table", entity );
          _context.Save( Execute.Individually );
 
-         try
-         {
-            _context.GetItem<DecoratedItem>( "diffTable", "abc", "123" );
-            Assert.Fail( "Should have thrown exception" );
-         }
-         catch ( EntityDoesNotExistException )
-         {
-         }
+         var returnedItem = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault();
+         Assert.IsNotNull( returnedItem );
       }
 
       [TestMethod]
@@ -128,13 +108,13 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public void GetCollectionWithPartitionKey_NoItems_ReturnsEmptyEnumermation()
+      public void QueryOnPartitionKey_NoItems_ReturnsEmptyEnumermation()
       {
-         Assert.AreEqual( 0, _context.GetCollection<DecoratedItem>( "table", "empty partition" ).Count() );
+         Assert.AreEqual( 0, _context.CreateQuery<DecoratedItem>( "table").PartitionKeyEquals( "empty partition" ).Count() );
       }
 
       [TestMethod]
-      public void GetCollectionWithPartitionKey_ItemsInMultiplePartitions_ItemsInSpecifiedPartitionReturned()
+      public void QueryOnPartitionKey_ItemsInMultiplePartitions_ItemsInSpecifiedPartitionReturned()
       {
          var items = new[]
                      {
@@ -148,14 +128,14 @@ namespace TechSmith.Hyde.Test
          }
          _context.Save( Execute.Individually );
 
-         var result = _context.GetCollection<DecoratedItem>( "table", "abc" ).ToList();
+         var result = _context.CreateQuery<DecoratedItem>( "table").PartitionKeyEquals( "abc" ).ToList();
          Assert.AreEqual( 2, result.Count );
          Assert.AreEqual( 1, result.Count( i => i.Name == items[0].Name && i.Id == items[0].Id && i.Age == items[0].Age ) );
          Assert.AreEqual( 1, result.Count( i => i.Name == items[1].Name && i.Id == items[1].Id && i.Age == items[1].Age ) );
       }
 
       [TestMethod]
-      public void GetRangeByRowKey_ItemsInRange_ReturnsItems()
+      public void QueryByPartitionKeyAndRowKeyRange_ItemsInRange_ReturnsItems()
       {
          var items = new[]
                      {
@@ -170,13 +150,15 @@ namespace TechSmith.Hyde.Test
          _context.Save( Execute.Individually );
 
          var tsp = new InMemoryTableStorageProvider();
-         var result = _context.GetRangeByRowKey( "table", "abc", tsp.MinimumKeyValue, tsp.MaximumKeyValue );
+         var result = _context.CreateQuery( "table" ).PartitionKeyEquals( "abc" )
+                              .RowKeyFrom( tsp.MinimumKeyValue ).Inclusive()
+                              .RowKeyTo( tsp.MaximumKeyValue ).Inclusive();
 
          Assert.AreEqual( 2, result.Count() );
       }
 
       [TestMethod]
-      public void GetRangeByPartitionKey_ItemsInRange_ReturnsItems()
+      public void QueryByPartitionKeyRange_ItemsInRange_ReturnsItems()
       {
          var items = new[]
                      {
@@ -191,7 +173,9 @@ namespace TechSmith.Hyde.Test
          _context.Save( Execute.Individually );
 
          var tsp = new InMemoryTableStorageProvider();
-         var result = _context.GetRangeByPartitionKey( "table", tsp.MinimumKeyValue, "bcc" );
+         var result = _context.CreateQuery( "table" )
+                              .PartitionKeyFrom( tsp.MinimumKeyValue ).Inclusive()
+                              .PartitionKeyTo( "bcc").Inclusive();
 
          Assert.AreEqual( 2, result.Count() );
       }
@@ -202,7 +186,7 @@ namespace TechSmith.Hyde.Test
          _context.Upsert( "table",TableItem.Create( new DecoratedItem { Id = "abc", Name = "123", Age = 42 } ) );
          _context.Save( Execute.Individually );
 
-         var item = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
+         var item = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
          Assert.AreEqual( 42, item.Age );
       }
 
@@ -215,7 +199,7 @@ namespace TechSmith.Hyde.Test
          _context.Upsert( "table", TableItem.Create(new DecoratedItem { Id = "abc", Name = "123", Age = 36 } ) );
          _context.Save( Execute.Individually );
 
-         var item = _context.GetItem<DecoratedItem>( "table", "abc", "123" );
+         var item = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).Single();
          Assert.AreEqual( 36, item.Age );
       }
 
@@ -228,14 +212,8 @@ namespace TechSmith.Hyde.Test
          _context.DeleteItem( "table", "abc", "123" );
          _context.Save( Execute.Individually );
 
-         try
-         {
-            _context.GetItem<DecoratedItem>( "table", "abc", "123" );
-            Assert.Fail( "Should have thrown exception" );
-         }
-         catch ( EntityDoesNotExistException )
-         {
-         }
+         var item = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "123" ).SingleOrDefault();
+         Assert.IsNull( item );
       }
 
       [TestMethod]
@@ -264,7 +242,7 @@ namespace TechSmith.Hyde.Test
          {
          }
 
-         var items = _context.GetCollection<DecoratedItem>( "table", "abc" ).ToList();
+         var items = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).ToList();
          Assert.AreEqual( 2, items.Count );
          Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "123" && i.Age == 34 ) );
          Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "456" && i.Age == 42 ) );
@@ -291,7 +269,7 @@ namespace TechSmith.Hyde.Test
          {
          }
 
-         var items = _context.GetCollection<DecoratedItem>( "table", "abc" ).ToList();
+         var items = _context.CreateQuery<DecoratedItem>( "table" ).PartitionKeyEquals( "abc" ).ToList();
          Assert.AreEqual( 2, items.Count );
          Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "123" && i.Age == 42 ) );
          Assert.AreEqual( 1, items.Count( i => i.Id == "abc" && i.Name == "789" && i.Age == 42 ) );

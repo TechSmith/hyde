@@ -1,42 +1,27 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.WindowsAzure.Storage.Table;
+﻿using Microsoft.WindowsAzure.Storage.Table;
 
 namespace TechSmith.Hyde.Table.Azure
 {
-   internal class AzureQuery<T> : IQuery<T> where T : new()
+   internal class AzureQuery<T> : AbstractAzureQuery<T> where T : new()
    {
-      private readonly CloudTable _table;
-      private TableQuery<GenericTableEntity> _query;
-
-      internal AzureQuery( CloudTable table, string filter )
+      internal AzureQuery( CloudTable table )
+         : base( table )
       {
-         _table = table;
-         _query = new TableQuery<GenericTableEntity>().Where( filter );
       }
 
-      private AzureQuery( CloudTable table, TableQuery<GenericTableEntity> query )
+      private AzureQuery( AzureQuery<T> previous )
+         : base( previous )
       {
-         _table = table;
-         _query = query;
       }
 
-      public IEnumerator<T> GetEnumerator()
+      protected override AbstractQuery<T> CreateCopy()
       {
-         return _table.ExecuteQuery( _query ).Select( e => e.ConvertTo<T>() ).GetEnumerator();
+         return new AzureQuery<T>( this );
       }
 
-      IEnumerator IEnumerable.GetEnumerator()
+      internal override T ConvertResult( GenericTableEntity e )
       {
-         return GetEnumerator();
+         return e.ConvertTo<T>();
       }
-
-      public IQuery<T> Top( int count )
-      {
-         return new AzureQuery<T>( _table, _query.Take( count ) );
-      }
-
-
    }
 }

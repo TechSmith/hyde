@@ -23,84 +23,14 @@ namespace TechSmith.Hyde.Table.Azure
          _storageAccount = storageAccount;
       }
 
-      public T GetItem<T>( string tableName, string partitionKey, string rowKey ) where T : new()
+      public IFilterable<T> CreateQuery<T>( string tableName ) where T : new()
       {
-         return Get( tableName, partitionKey, rowKey ).ConvertTo<T>();
+         return new AzureQuery<T>( Table( tableName ) );
       }
 
-      public IQuery<T> GetCollection<T>( string tableName ) where T : new()
+      public IFilterable<dynamic> CreateQuery( string tableName )
       {
-         string allPartitionAndRowsFilter = string.Empty;
-         return new AzureQuery<T>( Table( tableName ), allPartitionAndRowsFilter );
-      }
-
-      public IQuery<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
-      {
-         var allRowsInPartitonFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.Equal, partitionKey );
-         return new AzureQuery<T>( Table( tableName ), allRowsInPartitonFilter );
-      }
-
-      public IQuery<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
-      {
-         var lowerRangePartitionFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.GreaterThanOrEqual, partitionKeyLow );
-         var higherRangePartitionFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.LessThanOrEqual, partitionKeyHigh );
-
-         var rangePartitionFilter = TableQuery.CombineFilters( lowerRangePartitionFilter, TableOperators.And, higherRangePartitionFilter );
-
-         return new AzureQuery<T>( Table( tableName ), rangePartitionFilter );
-      }
-
-      public IQuery<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
-      {
-         var partitionFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.Equal, partitionKey );
-         var lowerRangeRowFilter = TableQuery.GenerateFilterCondition( "RowKey", QueryComparisons.GreaterThanOrEqual, rowKeyLow );
-         var higherRangeRowFilter = TableQuery.GenerateFilterCondition( "RowKey", QueryComparisons.LessThanOrEqual, rowKeyHigh );
-
-         var rangeRowFilter = TableQuery.CombineFilters( lowerRangeRowFilter, TableOperators.And, higherRangeRowFilter );
-
-         var fullRangeFilter = TableQuery.CombineFilters( partitionFilter, TableOperators.And, rangeRowFilter );
-
-         return new AzureQuery<T>( Table( tableName ), fullRangeFilter );
-      }
-
-      public dynamic GetItem( string tableName, string partitionKey, string rowKey )
-      {
-         return Get( tableName, partitionKey, rowKey ).ConvertToDynamic();
-      }
-
-      public IQuery<dynamic> GetCollection( string tableName )
-      {
-         string allPartitionAndRowsFilter = string.Empty;
-         return new AzureDynamicQuery( Table( tableName ), allPartitionAndRowsFilter );
-      }
-
-      public IQuery<dynamic> GetCollection( string tableName, string partitionKey )
-      {
-         var allRowsInPartitonFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.Equal, partitionKey );
-         return new AzureDynamicQuery( Table( tableName ), allRowsInPartitonFilter );
-      }
-
-      public IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
-      {
-         var lowerRangePartitionFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.GreaterThanOrEqual, partitionKeyLow );
-         var higherRangePartitionFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.LessThanOrEqual, partitionKeyHigh );
-
-         var rangePartitionFilter = TableQuery.CombineFilters( lowerRangePartitionFilter, TableOperators.And, higherRangePartitionFilter );
-
-         return new AzureDynamicQuery( Table( tableName ), rangePartitionFilter );
-      }
-
-      public IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
-      {
-         var partitionFilter = TableQuery.GenerateFilterCondition( "PartitionKey", QueryComparisons.Equal, partitionKey );
-         var lowerRangeRowFilter = TableQuery.GenerateFilterCondition( "RowKey", QueryComparisons.GreaterThanOrEqual, rowKeyLow );
-         var higherRangeRowFilter = TableQuery.GenerateFilterCondition( "RowKey", QueryComparisons.LessThanOrEqual, rowKeyHigh );
-
-         var rangeRowFilter = TableQuery.CombineFilters( lowerRangeRowFilter, TableOperators.And, higherRangeRowFilter );
-
-         var fullRangeFilter = TableQuery.CombineFilters( partitionFilter, TableOperators.And, rangeRowFilter );
-
-         return new AzureDynamicQuery( Table( tableName ), fullRangeFilter );
+         return new AzureDynamicQuery( Table( tableName ) );
       }
 
       public void AddNewItem( string tableName, TableItem tableItem )
@@ -320,26 +250,6 @@ namespace TechSmith.Hyde.Table.Azure
          {
             ExecuteBatchHandlingExceptions( tables[0], batchOp );
          }
-      }
-
-      [Obsolete( "Use GetRangeByPartitionKey instead." )]
-      public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
-      {
-         return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
-      }
-
-      private GenericTableEntity Get( string tableName, string partitionKey, string rowKey )
-      {
-         var retrieveOperation = TableOperation.Retrieve<GenericTableEntity>( partitionKey, rowKey );
-
-         var result = Table( tableName ).Execute( retrieveOperation, _retriableTableRequest );
-
-         if ( result.Result == null )
-         {
-            throw new EntityDoesNotExistException( partitionKey, rowKey, null );
-         }
-
-         return (GenericTableEntity)result.Result;
       }
 
       private CloudTable Table( string tableName )

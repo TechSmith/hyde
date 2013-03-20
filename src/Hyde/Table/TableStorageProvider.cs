@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using TechSmith.Hyde.Common;
 
 namespace TechSmith.Hyde.Table
 {
@@ -76,22 +78,34 @@ namespace TechSmith.Hyde.Table
 
       public T Get<T>( string tableName, string partitionKey, string rowKey ) where T : new()
       {
-         return _context.GetItem<T>( tableName, partitionKey, rowKey );
+         var result = _context.CreateQuery<T>( tableName ).PartitionKeyEquals( partitionKey ).RowKeyEquals( rowKey ).ToArray();
+         if ( result.Length == 0 )
+         {
+            throw new EntityDoesNotExistException( partitionKey, rowKey, null );
+         }
+         return result[0];
       }
 
       public dynamic Get( string tableName, string partitionKey, string rowKey )
       {
-         return _context.GetItem( tableName, partitionKey, rowKey );
+         var result = _context.CreateQuery( tableName ).PartitionKeyEquals( partitionKey ).RowKeyEquals( rowKey ).ToArray();
+         if ( result.Length == 0 )
+         {
+            throw new EntityDoesNotExistException( partitionKey, rowKey, null );
+         }
+         return result[0];
       }
 
+      [Obsolete( "Use CreateQuery<T>" )]
       public IQuery<T> GetCollection<T>( string tableName, string partitionKey ) where T : new()
       {
-         return _context.GetCollection<T>( tableName, partitionKey );
+         return _context.CreateQuery<T>( tableName ).PartitionKeyEquals( partitionKey );
       }
 
+      [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetCollection( string tableName, string partitionKey )
       {
-         return _context.GetCollection( tableName, partitionKey );
+         return _context.CreateQuery( tableName ).PartitionKeyEquals( partitionKey );
       }
 
       /// <summary>
@@ -100,9 +114,10 @@ namespace TechSmith.Hyde.Table
       /// <typeparam name="T">type of the instances to return</typeparam>
       /// <param name="tableName">name of the table</param>
       /// <returns>all rows in tableName</returns>
+      [Obsolete( "Use CreateQuery<T>" )]
       public IQuery<T> GetCollection<T>( string tableName ) where T : new()
       {
-         return _context.GetCollection<T>( tableName );
+         return _context.CreateQuery<T>( tableName );
       }
 
       /// <summary>
@@ -110,35 +125,71 @@ namespace TechSmith.Hyde.Table
       /// </summary>
       /// <param name="tableName">name of the table</param>
       /// <returns>all rows in tableName</returns>
+      [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetCollection( string tableName )
       {
-         return _context.GetCollection( tableName );
+         return _context.CreateQuery( tableName );
       }
 
-      [Obsolete( "Use GetRangeByPartitionKey instead." )]
+      /// <summary>
+      /// Create a query object that allows fluent filtering on partition and row keys.
+      /// </summary>
+      /// <typeparam name="T">type of the instances to return</typeparam>
+      /// <param name="tableName">name of the table</param>
+      /// <returns>a fluent query object</returns>
+      public IFilterable<T> CreateQuery<T>( string tableName ) where T : new()
+      {
+         return _context.CreateQuery<T>( tableName );
+      }
+
+      /// <summary>
+      /// Create a query object that allows fluent filtering on partition and row keys.
+      /// </summary>
+      /// <param name="tableName">name of the table</param>
+      /// <returns>a fluent query object</returns>
+      public IFilterable<dynamic> CreateQuery( string tableName )
+      {
+         return _context.CreateQuery( tableName );
+      }
+
+      [Obsolete( "Use CreateQuery<T>" )]
       public IEnumerable<T> GetRange<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
          return GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
       }
 
+      [Obsolete( "Use CreateQuery<T>" )]
       public IQuery<T> GetRangeByPartitionKey<T>( string tableName, string partitionKeyLow, string partitionKeyHigh ) where T : new()
       {
-         return _context.GetRangeByPartitionKey<T>( tableName, partitionKeyLow, partitionKeyHigh );
+         return _context.CreateQuery<T>( tableName )
+                        .PartitionKeyFrom( partitionKeyLow ).Inclusive()
+                        .PartitionKeyTo( partitionKeyHigh ).Inclusive();
       }
 
+      [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetRangeByPartitionKey( string tableName, string partitionKeyLow, string partitionKeyHigh )
       {
-         return _context.GetRangeByPartitionKey( tableName, partitionKeyLow, partitionKeyHigh );
+         return _context.CreateQuery( tableName )
+                        .PartitionKeyFrom( partitionKeyLow ).Inclusive()
+                        .PartitionKeyTo( partitionKeyHigh ).Inclusive();
       }
 
+      [Obsolete( "Use CreateQuery<T>" )]
       public IQuery<T> GetRangeByRowKey<T>( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh ) where T : new()
       {
-         return _context.GetRangeByRowKey<T>( tableName, partitionKey, rowKeyLow, rowKeyHigh );
+         return _context.CreateQuery<T>( tableName )
+                        .PartitionKeyEquals( partitionKey )
+                        .RowKeyFrom( rowKeyLow ).Inclusive()
+                        .RowKeyTo( rowKeyHigh ).Inclusive();
       }
 
+      [Obsolete( "Use CreateQuery" )]
       public IQuery<dynamic> GetRangeByRowKey( string tableName, string partitionKey, string rowKeyLow, string rowKeyHigh )
       {
-         return _context.GetRangeByRowKey( tableName, partitionKey, rowKeyLow, rowKeyHigh );
+         return _context.CreateQuery( tableName )
+                        .PartitionKeyEquals( partitionKey )
+                        .RowKeyFrom( rowKeyLow ).Inclusive()
+                        .RowKeyTo( rowKeyHigh ).Inclusive();
       }
 
       public void Save()
