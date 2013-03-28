@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Table;
@@ -105,6 +107,22 @@ namespace TechSmith.Hyde.Test
          catch ( EntityDoesNotExistException )
          {
          }
+      }
+
+      [TestMethod]
+      public void QueryForDynamic_RowContainsNullValues_ResultingDynamicHasNullPropertiesRemoved()
+      {
+         var item = new DecoratedItemWithNullableProperty() { Id = "abc", Name = "Hello" };
+         _context.AddNewItem( "table", TableItem.Create( item ) );
+         _context.Save( Execute.Individually );
+
+         var result = _context.CreateQuery( "table" ).PartitionKeyEquals( "abc" ).RowKeyEquals( "Hello" );
+         var asDict = (IDictionary<string, object>) result.First();
+
+         Assert.AreEqual( 2, asDict.Count() );
+         Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
+         Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
+         Assert.IsFalse( asDict.ContainsKey( "Description" ) );
       }
 
       [TestMethod]

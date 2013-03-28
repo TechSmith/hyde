@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
 using TechSmith.Hyde.Table.Azure;
 
 namespace TechSmith.Hyde.Table.Memory
@@ -22,7 +25,17 @@ namespace TechSmith.Hyde.Table.Memory
 
       internal override dynamic Convert( GenericTableEntity e )
       {
-         return e.ConvertToDynamic();
+         return StripNullValues( e.ConvertToDynamic() );
+      }
+
+      private static dynamic StripNullValues( dynamic obj )
+      {
+         dynamic result = new ExpandoObject();
+         foreach ( var p in ( obj as IDictionary<string, object> ).Where( p => p.Value != null ) )
+         {
+            ( (IDictionary<string, object>) result ).Add( p );
+         }
+         return result;
       }
    }
 }

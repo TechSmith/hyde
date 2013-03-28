@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Dynamic;
 using System.Linq;
@@ -1272,6 +1273,21 @@ namespace TechSmith.Hyde.IntegrationTest
          var result = _tableStorageProvider.GetRangeByRowKey<TypeWithStringProperty>( _tableName, _partitionKey, _tableStorageProvider.MinimumKeyValue, "\u0020\u0020" );
 
          Assert.AreEqual( 2, result.Count() );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void Get_EntityIsSerializedWithNullValue_DynamicResponseDoesNotContainNullProperties()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithNullableProperty { Id = "0", Name = "1" } );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get( _tableName, "0", "1" );
+         var asDict = result as IDictionary<string, object>;
+         Assert.AreEqual( 2, asDict.Count() );
+         Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
+         Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
+         Assert.IsFalse( asDict.ContainsKey( "Description" ) );
       }
 
       private void EnsureOneItemInTableStorage()

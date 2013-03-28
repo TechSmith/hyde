@@ -94,6 +94,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DecoratedItem.cs" />
+    <Compile Include="DecoratedItemWithNullableProperty.cs" />
     <Compile Include="DynamicPropertyBag.cs" />
     <Compile Include="GenericTableEntityTests.cs" />
     <Compile Include="MemoryTableContextTest.cs" />
