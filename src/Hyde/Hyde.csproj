@@ -91,6 +91,8 @@
     <Compile Include="Table\Azure\ExecutableTableOperation.cs" />
     <Compile Include="ICloudStorageAccount.cs" />
     <Compile Include="Table\Azure\GenericTableEntity.cs" />
+    <Compile Include="Table\Azure\ObjectToTypeConverters\ObjectConverterFactory.cs" />
+    <Compile Include="Table\Azure\ObjectToTypeConverters\IObjectToTypeConverter.cs" />
     <Compile Include="Table\Memory\AbstractMemoryQuery.cs" />
     <Compile Include="Table\Memory\DynamicMemoryQuery.cs" />
     <Compile Include="Table\Memory\MemoryQuery.cs" />
@@ -115,6 +117,7 @@
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Dynamic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -121,6 +122,30 @@ namespace TechSmith.Hyde.Test
          wereCool &= genericItemToTest.WriteEntity( null ).Count == 2;
 
          Assert.IsTrue( wereCool );
+      }
+
+      private class TypeWithBoolProperty
+      {
+         public bool IsAwesome
+         {
+            get;
+            set;
+         }
+      }
+
+      [TestMethod]
+      [ExpectedException( typeof( InvalidOperationException ) )]
+      public void ConvertTo_ItemHasColumnWithNonBoolType_ResultingObjectHasFalsePropertyValue()
+      {
+         dynamic item = new ExpandoObject();
+         item.IsAwesome = "yes!";
+
+         TableItem tableItem = TableItem.Create( item, "pk", "rk" );
+         var tableEntity = GenericTableEntity.HydrateFrom( tableItem );
+
+         var entity = tableEntity.ConvertTo<TypeWithBoolProperty>();
+
+         Assert.IsFalse( entity.IsAwesome );
       }
    }
 }

@@ -106,6 +106,7 @@
     <Compile Include="HashRepositoryTests.cs" />
     <Compile Include="SimpleDataItem.cs" />
     <Compile Include="DynamicTest.cs" />
+    <Compile Include="TypeWithEnumProperty.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">

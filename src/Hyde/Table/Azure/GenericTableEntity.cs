@@ -7,50 +7,13 @@ using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Table;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
+using TechSmith.Hyde.Table.Azure.ObjectToTypeConverters;
 
 namespace TechSmith.Hyde.Table.Azure
 {
    internal class GenericTableEntity : ITableEntity
    {
       private IDictionary<string, EntityProperty> _properties;
-
-      private static readonly Dictionary<Type, Func<EntityProperty, object>> _typeToValueFunctions = new Dictionary<Type, Func<EntityProperty, object>>
-        {
-           { typeof( string ), p => p.StringValue },
-           { typeof( int ), p => p.Int32Value.Value },
-           { typeof( int? ), p => p.Int32Value },
-           { typeof( double ), p => p.DoubleValue.Value },
-           { typeof( double? ), p => p.DoubleValue },
-           { typeof( byte[] ), p => p.BinaryValue },
-           { typeof( Guid ), p => p.GuidValue.Value },
-           { typeof( Guid? ), p => p.GuidValue },
-           { typeof( DateTime ), p => p.DateTimeOffsetValue.Value.UtcDateTime },
-           { typeof( DateTime? ), p => p.DateTimeOffsetValue.HasValue ? p.DateTimeOffsetValue.Value.UtcDateTime : (DateTime?) null },
-           { typeof( bool ), p => p.BooleanValue.Value },
-           { typeof( bool? ), p => p.BooleanValue },
-           { typeof( long ), p => p.Int64Value.Value },
-           { typeof( long? ), p => p.Int64Value },
-           { typeof( Uri ), p => string.IsNullOrWhiteSpace( p.StringValue ) ? null : new Uri( p.StringValue ) },
-        };
-
-      private static readonly Dictionary<Type, Func<object, EntityProperty>> _typeToEntityPropertyFunctions = new Dictionary<Type, Func<object, EntityProperty>>
-        {
-           { typeof( string ), o => new EntityProperty( (string) o) },
-           { typeof( int ), o => new EntityProperty( (int) o) },
-           { typeof( int? ), o => o == null ? new EntityProperty( (int?) null ) : new EntityProperty( (int) o) },
-           { typeof( double ), o => new EntityProperty((double) o) },
-           { typeof( double? ), o => o == null ? new EntityProperty((double?) null ) : new EntityProperty((double) o) },
-           { typeof( byte[] ), o => new EntityProperty((byte[]) o) },
-           { typeof( Guid ), o => new EntityProperty((Guid) o)},
-           { typeof( Guid? ), o => o == null ? new EntityProperty((Guid?) null) : new EntityProperty((Guid) o)},
-           { typeof( DateTime ), o => new EntityProperty( (DateTime) o)  },
-           { typeof( DateTime? ), o => new EntityProperty( (DateTime?) o)  },
-           { typeof( bool ), o => new EntityProperty((bool) o)},
-           { typeof( bool? ), o => o== null ? new EntityProperty((bool?) null): new EntityProperty((bool) o) },
-           { typeof( long ), o => new EntityProperty((long) o)},
-           { typeof( long? ), o => o == null ? new EntityProperty((long?) null):new EntityProperty((long) o ) },
-           { typeof( Uri ), o => o == null ? new EntityProperty((string) null) : new EntityProperty( ((Uri)o).AbsoluteUri) },
-        };
 
       private static readonly Dictionary<EdmType, Func<EntityProperty, object>> _edmTypeToConverterFunction = new Dictionary<EdmType, Func<EntityProperty, object>>
         {
@@ -130,13 +93,9 @@ namespace TechSmith.Hyde.Table.Azure
          foreach ( KeyValuePair<string, Tuple<object, Type>> property in properties )
          {
             Type propertyType = property.Value.Item2;
-            if ( !_typeToEntityPropertyFunctions.ContainsKey( propertyType ) )
-            {
-               throw new NotSupportedException( "The type " + propertyType + " is not supported." );
-            }
 
-            Func<object, EntityProperty> objectToEntityPropertyConverter = _typeToEntityPropertyFunctions[propertyType];
-            entityProperties[property.Key] = objectToEntityPropertyConverter( property.Value.Item1 );
+            IObjectToTypeConverter converter = ObjectConverterFactory.GetConverterFor( propertyType );
+            entityProperties[property.Key] = converter.ConvertToEntityProperty( property.Value.Item1, propertyType );
          }
 
          return entityProperties;
@@ -191,10 +150,8 @@ namespace TechSmith.Hyde.Table.Azure
             return;
          }
 
-         Func<EntityProperty, object> funcToCall = _typeToValueFunctions[typeProperty.PropertyType];
-         object propertyValue = funcToCall( _properties[typeProperty.Name] );
-
-         typeProperty.SetValue( newItem, propertyValue, null );
+         IObjectToTypeConverter objectConverter = ObjectConverterFactory.GetConverterFor( typeProperty.PropertyType );
+         typeProperty.SetValue( newItem, objectConverter.ConvertToValue( _properties[typeProperty.Name], typeProperty ), null );
       }
 
       private void SetRowKeyAndPartitionKeyOnObject<T>( T newItem ) where T : new()

@@ -161,6 +161,33 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void Add_EntityHasEnumAttribute_IsSavedAndRetrievedProperly()
+      {
+         var expected = new TypeWithEnumProperty { EnumProperty = TypeWithEnumProperty.TheEnum.SecondItem };
+         _tableStorageProvider.Add( _tableName, expected, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var actual = _tableStorageProvider.Get<TypeWithEnumProperty>( _tableName, _partitionKey, _rowKey );
+
+         Assert.AreEqual( expected.EnumProperty, actual.EnumProperty );
+      }
+
+      [TestMethod]
+      public void Add_EntityHasInvalidEnumValue_IsRetrievedAsDefaultEnumValue()
+      {
+         var expected = new TypeWithEnumProperty
+         {
+            EnumProperty = (TypeWithEnumProperty.TheEnum) 10
+         };
+         _tableStorageProvider.Add( _tableName, expected, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var actual = _tableStorageProvider.Get<TypeWithEnumProperty>( _tableName, _partitionKey, _rowKey );
+
+         Assert.AreEqual( TypeWithEnumProperty.TheEnum.FirstItem, actual.EnumProperty );
+      }
+
+      [TestMethod]
       public void Delete_ItemInTable_ItemDeleted()
       {
          var dataItem = new SimpleDataItem();

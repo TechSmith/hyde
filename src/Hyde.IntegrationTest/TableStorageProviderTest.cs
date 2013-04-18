@@ -219,6 +219,21 @@ namespace TechSmith.Hyde.IntegrationTest
          }
       }
 
+      public class TypeWithEnumProperty
+      {
+         public TheEnum EnumValue
+         {
+            get;
+            set;
+         }
+
+         public enum TheEnum
+         {
+            FirstValue,
+            SecondValue
+         }
+      }
+
       private TableStorageProvider _tableStorageProvider;
 
       [TestInitialize]
@@ -795,6 +810,16 @@ namespace TechSmith.Hyde.IntegrationTest
 
          var result = _tableStorageProvider.Get<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
          Assert.AreEqual( null, result.FirstType );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
+      public void AddingAndRetreivingTypeWithEnumProperty_ItemProperlyAddedAndRetreived()
+      {
+         _tableStorageProvider.Add( _tableName, new TypeWithEnumProperty { EnumValue = TypeWithEnumProperty.TheEnum.SecondValue }, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.Get<TypeWithEnumProperty>( _tableName, _partitionKey, _rowKey );
+         Assert.AreEqual( TypeWithEnumProperty.TheEnum.SecondValue, result.EnumValue );
       }
 
       [TestCategory( "Integration" ), TestMethod]
