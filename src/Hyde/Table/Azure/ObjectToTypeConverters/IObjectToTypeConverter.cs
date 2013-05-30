@@ -138,6 +138,14 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
       }
    }
 
+   internal class DateTimeOffsetConverter : ValueTypeConverter<DateTimeOffset>
+   {
+      public DateTimeOffsetConverter()
+         : base( ep => ep.DateTimeOffsetValue, o => new EntityProperty( (DateTimeOffset?) o ) )
+      {
+      }
+   }
+
    internal class DoubleConverter : ValueTypeConverter<double>
    {
       public DoubleConverter()

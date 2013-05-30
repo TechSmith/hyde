@@ -10,4 +10,13 @@ namespace TechSmith.Hyde.Test
          set;
       }
    }
+
+   public class TypeWithDateTimeOffset
+   {
+      public DateTimeOffset DateTimeOffsetProperty
+      {
+         get;
+         set;
+      }
+   }
 }
