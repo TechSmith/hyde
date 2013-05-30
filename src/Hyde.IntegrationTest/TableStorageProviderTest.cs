@@ -582,7 +582,7 @@ namespace TechSmith.Hyde.IntegrationTest
          var actual = _tableStorageProvider.Get<TypeWithDatetimeProperty>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( DateTimeKind.Utc, actual.FirstType.Kind );
-         Assert.AreEqual( theDate, actual.FirstType );
+         Assert.AreEqual( theDate.ToUniversalTime(), actual.FirstType );  
       }
 
       [TestCategory( "Integration" ), TestMethod]

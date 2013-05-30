@@ -162,7 +162,7 @@ namespace TechSmith.Hyde.Test
          var actual = _tableStorageProvider.Get<TypeWithDateTime>( _tableName, _partitionKey, _rowKey );
 
          Assert.AreEqual( DateTimeKind.Utc, actual.DateTimeProperty.Kind );
-         Assert.AreEqual( theDate, actual.DateTimeProperty );
+         Assert.AreEqual( theDate.ToUniversalTime(), actual.DateTimeProperty );
       }
 
       [TestMethod]
