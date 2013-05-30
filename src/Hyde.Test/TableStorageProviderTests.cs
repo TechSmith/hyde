@@ -149,6 +149,23 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
+      public void Add_EntityHasLocalDateTime_DateIsRetrievedAsUTCButIsEqual()
+      {
+         var theDate = new DateTime( 635055151618936589, DateTimeKind.Local );
+         var item = new TypeWithDateTime
+         {
+            DateTimeProperty = theDate
+         };
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var actual = _tableStorageProvider.Get<TypeWithDateTime>( _tableName, _partitionKey, _rowKey );
+
+         Assert.AreEqual( DateTimeKind.Utc, actual.DateTimeProperty.Kind );
+         Assert.AreEqual( theDate, actual.DateTimeProperty );
+      }
+
+      [TestMethod]
       public void Add_EntityHasPartitionAndRowKeyAttributes_PartitionAndRowKeysSetCorrectly()
       {
          var expected = new DecoratedItem { Id = "foo", Name = "bar", Age = 1 };

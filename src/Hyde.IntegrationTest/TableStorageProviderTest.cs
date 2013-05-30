@@ -568,6 +568,23 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.IsTrue( DateTimesPrettyMuchEqual( dateTime, result.FirstType ) );
       }
 
+      [TestMethod]
+      public void AddingAndRetreivingTypeWithSingleDateTimeProperty_EntityHasLocalDateTime_DateIsRetrievedAsUTCButIsEqual()
+      {
+         var theDate = new DateTime( 635055151618936589, DateTimeKind.Local );
+         var item = new TypeWithDatetimeProperty
+         {
+            FirstType = theDate
+         };
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var actual = _tableStorageProvider.Get<TypeWithDatetimeProperty>( _tableName, _partitionKey, _rowKey );
+
+         Assert.AreEqual( DateTimeKind.Utc, actual.FirstType.Kind );
+         Assert.AreEqual( theDate, actual.FirstType );
+      }
+
       [TestCategory( "Integration" ), TestMethod]
       public void AddingAndRetreivingTypeWithSingleBooleanProperty_ItemProperlyAddedAndRetreived()
       {

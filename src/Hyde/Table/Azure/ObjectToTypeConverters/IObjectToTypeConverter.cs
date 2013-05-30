@@ -126,7 +126,15 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
       public DateTimeConverter()
          : base(
             ep => ep.DateTimeOffsetValue.HasValue ? ep.DateTimeOffsetValue.Value.UtcDateTime : (DateTime?) null,
-            o => new EntityProperty( (DateTime?) o ) )
+            o =>
+            {
+               var date = (DateTime?) o;
+               if ( date.HasValue )
+               {
+                  date = DateTime.SpecifyKind( date.Value, DateTimeKind.Utc );
+               }
+               return new EntityProperty( date );
+            } )
       {
       }
    }
