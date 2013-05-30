@@ -78,6 +78,15 @@ namespace TechSmith.Hyde.IntegrationTest
          }
       }
 
+      public class TypeWithDatetimeOffsetProperty
+      {
+         public DateTimeOffset FirstType
+         {
+            get;
+            set;
+         }
+      }
+
       public class TypeWithBooleanProperty
       {
          public bool FirstType
@@ -566,6 +575,41 @@ namespace TechSmith.Hyde.IntegrationTest
 
          var result = _tableStorageProvider.Get<TypeWithDatetimeProperty>( _tableName, _partitionKey, _rowKey );
          Assert.IsTrue( DateTimesPrettyMuchEqual( dateTime, result.FirstType ) );
+      }
+
+      [TestMethod]
+      public void AddingAndRetreivingTypeWithSingleDateTimeProperty_EntityHasLocalDateTime_DateIsRetrievedAsUTCButIsEqual()
+      {
+         var theDate = new DateTime( 635055151618936589, DateTimeKind.Local );
+         var item = new TypeWithDatetimeProperty
+         {
+            FirstType = theDate
+         };
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var actual = _tableStorageProvider.Get<TypeWithDatetimeProperty>( _tableName, _partitionKey, _rowKey );
+
+         Assert.AreEqual( DateTimeKind.Utc, actual.FirstType.Kind );
+         Assert.AreEqual( theDate.ToUniversalTime(), actual.FirstType );  
+      }
+
+      [TestMethod]
+      public void AddingAndRetreivingTypeWithSingleDateTimeOffsetProperty_EntityHasLocalDateTimeStoredInOffset_DateOffsetIsRetrieved()
+      {
+         var theDateTime = new DateTime( 635055151618936589, DateTimeKind.Local );
+         var theDateTimeOffset = new DateTimeOffset( theDateTime );
+         var item = new TypeWithDatetimeOffsetProperty
+         {
+            FirstType = theDateTimeOffset
+         };
+         _tableStorageProvider.Add( _tableName, item, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var actual = _tableStorageProvider.Get<TypeWithDatetimeOffsetProperty>( _tableName, _partitionKey, _rowKey );
+
+         Assert.AreEqual( theDateTimeOffset, actual.FirstType );
+         Assert.AreEqual( theDateTime, actual.FirstType.LocalDateTime );
       }
 
       [TestCategory( "Integration" ), TestMethod]

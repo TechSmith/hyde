@@ -124,9 +124,24 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
    internal class DateTimeConverter : ValueTypeConverter<DateTime>
    {
       public DateTimeConverter()
-         : base(
-            ep => ep.DateTimeOffsetValue.HasValue ? ep.DateTimeOffsetValue.Value.UtcDateTime : (DateTime?) null,
-            o => new EntityProperty( (DateTime?) o ) )
+         : base( ep => ep.DateTimeOffsetValue.HasValue ? ep.DateTimeOffsetValue.Value.UtcDateTime : (DateTime?) null, o =>
+         {
+            var date = (DateTime?) o;
+            DateTimeOffset? value = null;
+            if ( date.HasValue )
+            {
+               value = new DateTimeOffset( date.Value );
+            }
+            return new EntityProperty( value );
+         } )
+      {
+      }
+   }
+
+   internal class DateTimeOffsetConverter : ValueTypeConverter<DateTimeOffset>
+   {
+      public DateTimeOffsetConverter()
+         : base( ep => ep.DateTimeOffsetValue, o => new EntityProperty( (DateTimeOffset?) o ) )
       {
       }
    }

@@ -106,6 +106,7 @@
     <Compile Include="HashRepositoryTests.cs" />
     <Compile Include="SimpleDataItem.cs" />
     <Compile Include="DynamicTest.cs" />
+    <Compile Include="TypeWithDateTime.cs" />
     <Compile Include="TypeWithEnumProperty.cs" />
   </ItemGroup>
   <ItemGroup>
