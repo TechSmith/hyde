@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using TechSmith.Hyde.Common;
 
 namespace TechSmith.Hyde.Table
@@ -82,6 +83,35 @@ namespace TechSmith.Hyde.Table
          if ( result.Length == 0 )
          {
             throw new EntityDoesNotExistException( partitionKey, rowKey, null );
+         }
+         return result[0];
+      }
+
+      public Task<T> GetAsync<T>( string tableName, string partitionKey, string rowKey ) where T : new()
+      {
+         return _context.CreateQuery<T>( tableName )
+                        .PartitionKeyEquals( partitionKey )
+                        .RowKeyEquals( rowKey )
+                        .Async()
+                        .ContinueWith( task => EndGetAsync( task, partitionKey, rowKey ) );
+      }
+
+      public Task<dynamic> GetAsync( string tableName, string partitionKey, string rowKey )
+      {
+         return _context.CreateQuery( tableName )
+                        .PartitionKeyEquals( partitionKey )
+                        .RowKeyEquals( rowKey )
+                        .Async()
+                        .ContinueWith( task => EndGetAsync( task, partitionKey, rowKey ),
+                                       TaskContinuationOptions.OnlyOnRanToCompletion );
+      }
+
+      private static T EndGetAsync<T>( Task<IPartialResult<T>> task, string pk, string rk )
+      {
+         var result = task.Result.ToArray();
+         if ( result.Length == 0 )
+         {
+            throw new EntityDoesNotExistException( pk, rk, null );
          }
          return result[0];
       }

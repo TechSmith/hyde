@@ -341,6 +341,35 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestCategory( "Integration" ), TestMethod]
+      public void GetAsync_ItemInStore_ItemReturnedByTask()
+      {
+         var dataItem = new TypeWithStringProperty
+         {
+            FirstType = "a"
+         };
+         _tableStorageProvider.Add( _tableName, dataItem, _partitionKey, _rowKey );
+         _tableStorageProvider.Save();
+
+         var result = _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey );
+
+         Assert.AreEqual( dataItem.FirstType, result.Result.FirstType );
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
+      public void GetAsync_ItemNotInStore_AccessingResultThrowsEntityDoesNotExistWrappedInAggregateException()
+      {
+         try
+         {
+            var result = _tableStorageProvider.GetAsync<TypeWithStringProperty>( _tableName, _partitionKey, _rowKey ).Result;
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( AggregateException e )
+         {
+            Assert.IsTrue( e.InnerException.GetType() ==  typeof( EntityDoesNotExistException ) );
+         }
+      }
+
+      [TestCategory( "Integration" ), TestMethod]
       public void Delete_ItemInStore_ItemDeleted()
       {
          var dataItem = new TypeWithStringProperty

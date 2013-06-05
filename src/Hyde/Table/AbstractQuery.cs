@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace TechSmith.Hyde.Table
 {
@@ -96,7 +97,7 @@ namespace TechSmith.Hyde.Table
          } );
       }
 
-      public IEnumerable<T> Top( int count )
+      public IQueryAsync<T> Top( int count )
       {
          var result = CreateCopy();
          result._query.TopCount = count;
@@ -104,6 +105,8 @@ namespace TechSmith.Hyde.Table
       }
 
       public abstract IEnumerator<T> GetEnumerator();
+
+      public abstract Task<IPartialResult<T>> Async();
 
       IEnumerator IEnumerable.GetEnumerator()
       {

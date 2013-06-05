@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using TechSmith.Hyde.Table.Azure;
 
 namespace TechSmith.Hyde.Table.Memory
@@ -22,7 +24,44 @@ namespace TechSmith.Hyde.Table.Memory
 
       internal abstract T Convert( GenericTableEntity e );
 
-      public override IEnumerator<T> GetEnumerator()
+      public override Task<IPartialResult<T>> Async()
+      {
+         return Task.Factory.StartNew<IPartialResult<T>>( () => new PartialResult( this ) );
+      }
+
+      private class PartialResult : IPartialResult<T>
+      {
+         private readonly AbstractMemoryQuery<T> _parent;
+
+         public PartialResult( AbstractMemoryQuery<T> parent )
+         {
+            _parent = parent;
+         }
+
+         public bool HasMoreResults { get { return false; } }
+
+         public IEnumerator<T> GetEnumerator()
+         {
+            return _parent.GetEnumerator();
+         }
+
+         IEnumerator IEnumerable.GetEnumerator()
+         {
+            return GetEnumerator();
+         }
+
+         public Task<IPartialResult<T>> GetNextAsync()
+         {
+            throw new InvalidOperationException();
+         }
+
+         public IPartialResult<T> GetNext()
+         {
+            throw new InvalidOperationException();
+         }
+      }
+
+      private IEnumerable<T> ExecuteQuery()
       {
          var pkFilter = FilterByKeyRange( e => e.PartitionKey, _query.PartitionKeyRange );
          var rkFilter = FilterByKeyRange( e => e.RowKey, _query.RowKeyRange );
@@ -31,7 +70,12 @@ namespace TechSmith.Hyde.Table.Memory
          {
             result = result.Take( _query.TopCount.Value );
          }
-         return result.Select( Convert ).GetEnumerator();
+         return result.Select( Convert );
+      }
+
+      public override IEnumerator<T> GetEnumerator()
+      {
+         return ExecuteQuery().GetEnumerator();
       }
 
       private static Func<GenericTableEntity, bool> FilterByKeyRange( Func<GenericTableEntity,string> getKey, KeyRange keyRange )

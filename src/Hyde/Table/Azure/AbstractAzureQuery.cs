@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace TechSmith.Hyde.Table.Azure
@@ -23,6 +26,69 @@ namespace TechSmith.Hyde.Table.Azure
       {
          var query = CreateTableQuery();
          return _table.ExecuteQuery( query ).Select( ConvertResult ).GetEnumerator();
+      }
+
+      public override Task<IPartialResult<T>> Async()
+      {
+         return GetPartialResultAsync( CreateTableQuery(), new TableContinuationToken() );
+      }
+
+      private Task<IPartialResult<T>> GetPartialResultAsync( TableQuery<GenericTableEntity> query,
+                                           TableContinuationToken token )
+      {
+         var asyncResult = _table.BeginExecuteQuerySegmented( query, token, ar => { }, null );
+         return Task.Factory.FromAsync( asyncResult, r =>
+         {
+            var segment = _table.EndExecuteQuerySegmented<GenericTableEntity>( r );
+            return (IPartialResult<T>)new PartialResult( this, query, segment );
+         } );
+      }
+
+      private class PartialResult : IPartialResult<T>
+      {
+         private readonly AbstractAzureQuery<T> _parent;
+         private readonly TableQuery<GenericTableEntity> _query;
+         private readonly TableQuerySegment<GenericTableEntity> _segment;
+
+         public PartialResult( AbstractAzureQuery<T> parent,
+                               TableQuery<GenericTableEntity> query,
+                               TableQuerySegment<GenericTableEntity> segment )
+         {
+            _parent = parent;
+            _query = query;
+            _segment = segment;
+         }
+
+         public bool HasMoreResults { get { return _segment.ContinuationToken != null; } }
+
+         public Task<IPartialResult<T>> GetNextAsync()
+         {
+            if ( !HasMoreResults )
+            {
+               throw new InvalidOperationException( "Cannot get next when there are no more results" );
+            }
+            return _parent.GetPartialResultAsync( _query, _segment.ContinuationToken );
+         }
+
+         public IPartialResult<T> GetNext()
+         {
+            if ( !HasMoreResults )
+            {
+               throw new InvalidOperationException( "Cannot get next when there are no more results" );
+            }
+            var nextSegment = _parent._table.ExecuteQuerySegmented( _query, _segment.ContinuationToken );
+            return new PartialResult( _parent, _query, nextSegment );
+         }
+
+         public IEnumerator<T> GetEnumerator()
+         {
+            return _segment.Select( _parent.ConvertResult ).GetEnumerator();
+         }
+
+         IEnumerator IEnumerable.GetEnumerator()
+         {
+            return GetEnumerator();
+         }
       }
 
       internal TableQuery<GenericTableEntity> CreateTableQuery()

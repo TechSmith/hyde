@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace TechSmith.Hyde.Table
 {
@@ -24,9 +25,21 @@ namespace TechSmith.Hyde.Table
       IBoundChoice<IQuery<T>> RowKeyTo( string value );
    }
 
-   public interface IQuery<T> : IEnumerable<T>
+   public interface IQuery<T> : IQueryAsync<T>
    {
-      IEnumerable<T> Top( int count );
+      IQueryAsync<T> Top( int count );
+   }
+
+   public interface IQueryAsync<T> : IEnumerable<T>
+   {
+      Task<IPartialResult<T>> Async();
+   }
+
+   public interface IPartialResult<T> : IEnumerable<T>
+   {
+      Task<IPartialResult<T>> GetNextAsync();
+      IPartialResult<T> GetNext();
+      bool HasMoreResults { get; }
    }
 
    public interface IBoundChoice<T>
