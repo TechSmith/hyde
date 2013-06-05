@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Table.Azure;
 
@@ -269,19 +270,7 @@ namespace TechSmith.Hyde.Table.Memory
       {
          try
          {
-            if ( executeMethod == Execute.Atomically )
-            {
-               SaveAtomically();
-               return;
-            }
-
-            foreach ( var action in _pendingActions )
-            {
-               lock ( _tables )
-               {
-                  action.Action( _tables );
-               }
-            }
+            SaveInternal( executeMethod, _pendingActions );
          }
          finally
          {
@@ -289,26 +278,50 @@ namespace TechSmith.Hyde.Table.Memory
          }
       }
 
-      private void SaveAtomically()
+      public Task SaveAsync( Execute executeMethod )
       {
-         if ( _pendingActions.Count > 100 )
+         var actions = new Queue<TableAction>( _pendingActions );
+         _pendingActions.Clear();
+         return Task.Factory.StartNew( () => SaveInternal( executeMethod, actions ) );
+      }
+
+      private static void SaveInternal( Execute executeMethod, Queue<TableAction> actions )
+      {
+         if ( executeMethod == Execute.Atomically )
+         {
+            SaveAtomically( actions );
+            return;
+         }
+
+         foreach ( var action in actions )
+         {
+            lock ( _tables )
+            {
+               action.Action( _tables );
+            }
+         }
+      }
+
+      private static void SaveAtomically( Queue<TableAction> actions )
+      {
+         if ( actions.Count > 100 )
          {
             throw new InvalidOperationException( "Cannot atomically execute more than 100 operations" );
          }
 
-         var partitionKeys = _pendingActions.Select( op => op.PartitionKey ).Distinct();
+         var partitionKeys = actions.Select( op => op.PartitionKey ).Distinct();
          if ( partitionKeys.Count() > 1 )
          {
             throw new InvalidOperationException( "Cannot atomically execute operations on different partitions" );
          }
 
-         var groupedByEntity = _pendingActions.GroupBy( op => Tuple.Create( op.PartitionKey, op.RowKey ) );
+         var groupedByEntity = actions.GroupBy( op => Tuple.Create( op.PartitionKey, op.RowKey ) );
          if ( groupedByEntity.Any( g => g.Count() > 1 ) )
          {
             throw new InvalidOperationException( "Cannot atomically execute two operations on the same entity" );
          }
 
-         var tables = _pendingActions.Select( op => op.TableName ).Distinct();
+         var tables = actions.Select( op => op.TableName ).Distinct();
          if ( tables.Count() > 1 )
          {
             throw new InvalidOperationException( "Cannot atomically execute operations on multiple tables" );
@@ -317,7 +330,7 @@ namespace TechSmith.Hyde.Table.Memory
          lock ( _tables )
          {
             var resultingTables = _tables.DeepCopy();
-            foreach ( var action in _pendingActions )
+            foreach ( var action in actions )
             {
                action.Action( resultingTables );
             }

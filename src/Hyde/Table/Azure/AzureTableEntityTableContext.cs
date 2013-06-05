@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Threading.Tasks;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.RetryPolicies;
 using Microsoft.WindowsAzure.Storage.Table;
@@ -127,6 +128,44 @@ namespace TechSmith.Hyde.Table.Azure
          }
       }
 
+      public Task SaveAsync( Execute executeMethod )
+      {
+         if ( !_operations.Any() )
+         {
+            // return completed task
+            var tcs = new TaskCompletionSource<object>();
+            tcs.SetResult( new object() );
+            return tcs.Task;
+         }
+
+         try
+         {
+            switch ( executeMethod )
+            {
+               case Execute.Individually:
+               {
+                  return SaveIndividualAsync( new List<ExecutableTableOperation>( _operations ) );
+               }
+               case Execute.InBatches:
+               {
+                  return SaveBatchAsync( new List<ExecutableTableOperation>( _operations ) );
+               }
+               case Execute.Atomically:
+               {
+                  return SaveAtomicallyAsync( new List<ExecutableTableOperation>( _operations ) );
+               }
+               default:
+               {
+                  throw new ArgumentException( "Unsupported execution method: " + executeMethod );
+               }
+            }
+         }
+         finally
+         {
+            _operations.Clear();
+         }
+      }
+
       private void SaveIndividual( IEnumerable<ExecutableTableOperation> operations )
       {
          foreach ( var op in operations )
@@ -135,6 +174,55 @@ namespace TechSmith.Hyde.Table.Azure
             HandleTableStorageExceptions( TableOperationType.Delete == operation.OperationType, () =>
                Table( operation.Table ).Execute( operation.Operation, _retriableTableRequest ) );
          }
+      }
+
+      private Task SaveIndividualAsync( IEnumerable<ExecutableTableOperation> operations )
+      {
+         // We construct a continuation chain of actions, each one asyncnronously executing
+         // an operation. This is complicated by the need to bridge the Begin/End style async programming
+         // model to the TAP model.
+
+         // For each operation, construct a function that returns a task representing an async execution
+         // of that operation. Note that the operation isn't executed until the function is called!.
+         var taskFuncs = operations.Select<ExecutableTableOperation,Func<Task>>( o => () => ToTask( o ) ).ToArray();
+
+         // Start asynchronously executing the first operation.
+         var priorTask = taskFuncs[0]();
+
+         // Chain the remaining operations onto the first task.
+         for ( int i = 1; i < taskFuncs.Length; ++i )
+         {
+            var taskFuncNum = i;
+            // There is no overload of Task.ContinueWith that fits together with
+            // Task.FromAsync or TaskCompletionSource. To get the desired behavior,
+            // we ContinueWith an action that returns a Task, and then call
+            // Task<Task>.Unwrap() to flatten things out.
+            // See http://stackoverflow.com/questions/3660760/how-do-i-chain-asynchronous-operations-with-the-task-parallel-library-in-net-4.
+            priorTask = priorTask.ContinueWith( t => t.Status == TaskStatus.RanToCompletion
+                                                     ? taskFuncs[taskFuncNum]()
+                                                     : CreateCompletedTask() )
+                                 .Unwrap();
+         }
+         return priorTask;
+      }
+
+      private static Task CreateCompletedTask()
+      {
+         var taskSource = new TaskCompletionSource<object>();
+         taskSource.SetResult( new object() );
+         return taskSource.Task;
+      }
+
+      private Task ToTask( ExecutableTableOperation op )
+      {
+         // Adapt the old-style Begin/End async programming model to the new TAP model,
+         // with task chaining.
+         var table = Table( op.Table );
+         var asyncResult = Table( op.Table ).BeginExecute( op.Operation, _retriableTableRequest, null, null, null );
+         return Task.Factory.FromAsync( asyncResult,
+            r => HandleTableStorageExceptions(
+               TableOperationType.Delete == op.OperationType,
+               () => table.EndExecute( r ) ) );
       }
 
       private static void HandleTableStorageExceptions( bool isUnbatchedDelete, Action action )
@@ -175,7 +263,8 @@ namespace TechSmith.Hyde.Table.Azure
          }
       }
 
-      private void SaveBatch( IEnumerable<ExecutableTableOperation> operations )
+      private static List<List<ExecutableTableOperation>> ValidateAndSplitIntoBatches(
+         IEnumerable<ExecutableTableOperation> operations )
       {
          // For two operations to appear in the same batch...
          Func<ExecutableTableOperation, ExecutableTableOperation, bool> canBatch = ( op1, op2 ) =>
@@ -200,8 +289,12 @@ namespace TechSmith.Hyde.Table.Azure
             }
             batches.Last().Add( nextOp );
          }
+         return batches;
+      }
 
-         foreach ( var batch in batches )
+      private void SaveBatch( IEnumerable<ExecutableTableOperation> operations )
+      {
+         foreach ( var batch in ValidateAndSplitIntoBatches( operations ) )
          {
             // No need to use an EGT for a single operation.
             if ( batch.Count == 1 )
@@ -210,23 +303,48 @@ namespace TechSmith.Hyde.Table.Azure
                continue;
             }
 
-            var batchOperation = new TableBatchOperation();
-            var table = batch.First().Table;
-            foreach ( var op in batch )
-            {
-               batchOperation.Add( op.Operation );
-            }
+            CloudTable table;
+            var batchOperation = ValidateAndCreateBatchOp( batch, out table );
             ExecuteBatchHandlingExceptions( table, batchOperation );
          }
       }
 
-      private void ExecuteBatchHandlingExceptions( string table, TableBatchOperation batchOperation )
+      private void ExecuteBatchHandlingExceptions( CloudTable table, TableBatchOperation batchOperation )
       {
          HandleTableStorageExceptions( false, () =>
-            Table( table ).ExecuteBatch( batchOperation, _retriableTableRequest ) );
+            table.ExecuteBatch( batchOperation, _retriableTableRequest ) );
+      }
+
+      private Task SaveBatchAsync( IEnumerable<ExecutableTableOperation> operations )
+      {
+         var batches = ValidateAndSplitIntoBatches( operations );
+         Func<List<ExecutableTableOperation>, Func<Task>> toAsyncFunc = ops =>
+            () => SaveAtomicallyAsync(ops);
+         var asyncFuncs = batches.Select( toAsyncFunc ).ToList();
+
+         var task = asyncFuncs[0]();
+         for ( int i = 1; i < asyncFuncs.Count; ++i )
+         {
+            var funcNum = i;
+            task = task.ContinueWith( t => t.Status == TaskStatus.RanToCompletion
+                                           ? asyncFuncs[funcNum]()
+                                           : CreateCompletedTask() )
+                       .Unwrap();
+         }
+         return task;
       }
 
       private void SaveAtomically( IEnumerable<ExecutableTableOperation> ops )
+      {
+         CloudTable table;
+         var batchOp = ValidateAndCreateBatchOp( ops, out table );
+         if ( batchOp.Count > 0 )
+         {
+            ExecuteBatchHandlingExceptions( table, batchOp );
+         }
+      }
+
+      private TableBatchOperation ValidateAndCreateBatchOp( IEnumerable<ExecutableTableOperation> ops, out CloudTable table )
       {
          var operations = ops.ToList();
          var partitionKeys = operations.Select( op => op.PartitionKey ).Distinct();
@@ -246,10 +364,24 @@ namespace TechSmith.Hyde.Table.Azure
          {
             batchOp.Add( op.Operation );
          }
-         if ( batchOp.Count > 0 )
+         table = batchOp.Count == 0 ? null : Table( tables[0] );
+         return batchOp;
+      }
+
+      private Task SaveAtomicallyAsync( IEnumerable<ExecutableTableOperation> ops )
+      {
+         CloudTable table;
+         var batchOp = ValidateAndCreateBatchOp( ops, out table );
+         if ( batchOp.Count == 0 )
          {
-            ExecuteBatchHandlingExceptions( tables[0], batchOp );
+            return CreateCompletedTask();
          }
+
+         var asyncResult = table.BeginExecuteBatch( batchOp, null, null );
+
+         return Task.Factory.FromAsync( asyncResult,
+            result => HandleTableStorageExceptions( false, () =>
+               table.EndExecuteBatch( result ) ) );
       }
 
       private CloudTable Table( string tableName )

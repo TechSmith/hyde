@@ -227,6 +227,16 @@ namespace TechSmith.Hyde.Table
          Save( Execute.Individually );
       }
 
+      public Task SaveAsync()
+      {
+         return SaveAsync( Execute.Individually );
+      }
+
+      public Task SaveAsync( Execute executeMethod )
+      {
+         return _context.SaveAsync( executeMethod );
+      }
+
       public void Save( Execute executeMethod )
       {
          _context.Save( executeMethod );

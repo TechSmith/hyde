@@ -1332,6 +1332,52 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
+      public void SaveAsync_MultipleOperationsIndividually_AllOperationsExecuted()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "one" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
+         var task = _tableStorageProvider.SaveAsync();
+
+         task.Wait();
+
+         var results = _tableStorageProvider.CreateQuery<DecoratedItem>( _tableName ).ToList();
+         Assert.AreEqual( 3, results.Count );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void SaveAsync_MultipleOperationsIndividuallyAndSecondFails_FollwingOperationsNotExecuted()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "one" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
+         _tableStorageProvider.Save();
+
+         // We can tell the last operation was executed last by
+         // setting it up to fail and then verifying that the other two completed.
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "one", Age = 42 } );
+         _tableStorageProvider.Delete( _tableName, new DecoratedItem { Id = "123", Name = "three" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "two" } );
+
+         var task = _tableStorageProvider.SaveAsync();
+         try
+         {
+            task.Wait();
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( AggregateException e )
+         {
+         }
+
+         var results = _tableStorageProvider.CreateQuery<DecoratedItem>( _tableName ).ToList();
+         Assert.AreEqual( 2, results.Count() );
+         Assert.AreEqual( 42, _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "one" ).Age );
+         Assert.IsFalse( results.Any( i => i.Name == "three" ) );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
       public void GetCollection_ManyItemsInStore_TakeMethodReturnsProperAmount()
       {
          _tableStorageProvider.Add( _tableName, new TypeWithStringProperty { FirstType = "a" }, _partitionKey, "a" );
