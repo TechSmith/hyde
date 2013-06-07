@@ -1,4 +1,6 @@
-﻿namespace TechSmith.Hyde.Table
+﻿using System.Threading.Tasks;
+
+namespace TechSmith.Hyde.Table
 {
    public interface ITableContext
    {
@@ -17,5 +19,6 @@
       void DeleteItem( string tableName, string partitionKey, string rowKey );
       void DeleteCollection( string tableName, string partitionKey );
       void Save( Execute executeMethod );
+      Task SaveAsync( Execute executeMethod );
    }
 }

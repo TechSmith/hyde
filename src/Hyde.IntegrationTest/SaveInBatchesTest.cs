@@ -259,6 +259,37 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
+      public void SaveAsync_MultipleOperationTypesOnDifferentRowsInSamePartition_OperationsExecutedInSameEGT()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 9 } );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "foo" } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 42 } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItem { Id = "123", Name = "bar" } );
+
+         // fail the EGT
+         _tableStorageProvider.Update( _tableName, new DecoratedItem { Id = "123", Name = "not found" } );
+
+         var task =_tableStorageProvider.SaveAsync( Execute.InBatches );
+
+         try
+         {
+            task.Wait();
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( AggregateException e )
+         {
+            Assert.IsTrue( e.Flatten().InnerException is EntityDoesNotExistException );
+         }
+
+         var items = _tableStorageProvider.CreateQuery<DecoratedItem>( _tableName ).ToList();
+         Assert.AreEqual( 1, items.Count );
+         Assert.AreEqual( 1, items.Count( i => i.Name == "abc" && i.Age == 9 ) );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
       public void Save_SameRowUpdatedTwice_UpdatesDoneInDifferentTransactions()
       {
          _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "abc", Age = 30 } );

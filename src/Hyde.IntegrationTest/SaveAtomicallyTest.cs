@@ -143,6 +143,23 @@ namespace TechSmith.Hyde.IntegrationTest
 
       [TestMethod]
       [TestCategory( "Integration" )]
+      public void SaveAsync_MultipleOperationTypesOnSamePartitionAndNoConflicts_OperationsSucceed()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Eve", Age = 34 } );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Ed", Age = 7 } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItem { Id = "123", Name = "Eve", Age = 42 } );
+         var task = _tableStorageProvider.SaveAsync( Execute.Atomically );
+
+         task.Wait();
+
+         Assert.AreEqual( 7, _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "Ed" ).Age );
+         Assert.AreEqual( 42, _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "Eve" ).Age );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
       [ExpectedException( typeof( InvalidOperationException ) )]
       public void Save_TableStorageReturnsBadRequest_ThrowsInvalidOperationException()
       {
@@ -170,6 +187,38 @@ namespace TechSmith.Hyde.IntegrationTest
          }
          catch ( EntityAlreadyExistsException )
          {
+         }
+
+         try
+         {
+            _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "Jane" );
+         }
+         catch ( EntityDoesNotExistException )
+         {
+         }
+
+         Assert.AreEqual( 34, _tableStorageProvider.Get<DecoratedItem>( _tableName, "123", "Jake" ).Age );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void SaveAsync_InsertingTwoRowsInPartitionAndOneAlreadyExists_NeitherRowInserted()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Jake", Age = 34 } );
+         _tableStorageProvider.Save();
+
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Jane" } );
+         _tableStorageProvider.Add( _tableName, new DecoratedItem { Id = "123", Name = "Jake", Age = 42 } );
+
+         var task = _tableStorageProvider.SaveAsync( Execute.Atomically );
+         try
+         {
+            task.Wait();
+            Assert.Fail( "Should have thrown exception" );
+         }
+         catch ( AggregateException e )
+         {
+            Assert.IsTrue( e.Flatten().InnerException is EntityAlreadyExistsException );
          }
 
          try
