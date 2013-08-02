@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
 using Microsoft.WindowsAzure.Storage.Table;
 
@@ -122,16 +123,70 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
    }
 
    internal class DateTimeConverter : ValueTypeConverter<DateTime>
-   {
+   {      
+      // The minimum datetime value allowable by Table Storage.
+      // "A 64-bit value expressed as Coordinated Universal Time (UTC). The supported DateTime range begins from 12:00 midnight, January 1, 1601 A.D. (C.E.), UTC. The range ends at December 31, 9999."
+      // source: http://msdn.microsoft.com/en-us/library/windowsazure/dd179338.aspx
+      internal static readonly DateTime MinimumSupportedDateTime = new DateTime( year: 1601, month: 1, day: 1, hour: 0, minute: 0, second: 0, kind: DateTimeKind.Utc );
       public DateTimeConverter()
-         : base( ep => ep.DateTimeOffsetValue.HasValue ? ep.DateTimeOffsetValue.Value.UtcDateTime : (DateTime?) null, o =>
+         : base( 
+         ep =>
+         {
+            switch ( ep.PropertyType )
+            {
+               case EdmType.DateTime:
+               {
+                  try
+                  {
+                     if ( ep.DateTimeOffsetValue.HasValue )
+                     {
+                        return ep.DateTimeOffsetValue.Value.UtcDateTime;
+                     }
+                  }
+                  catch ( ArgumentOutOfRangeException exception )
+                  {
+                     throw new InvalidOperationException( "Table storage returned a datetime that is not able to be stored in a C# DateTime. If you are using the storage emulator, this is most likely the cause of this exception.", exception );
+                  }
+                  break;
+               }
+               case EdmType.String:
+               {
+                  DateTimeOffset fromString;
+                  if ( !DateTimeOffset.TryParse( ep.StringValue, out fromString ) )
+                  {
+                     throw new InvalidOperationException( "Cannot interpret string as a DateTime." );
+                  }
+                  return fromString.UtcDateTime;
+               }
+
+               default:
+               {
+                  throw new InvalidOperationException( "Cannot interpret entity property as a DateTime." );
+               }
+            }
+
+            return null;
+         }, 
+         o =>
          {
             var date = (DateTime?) o;
             DateTimeOffset? value = null;
             if ( date.HasValue )
             {
+               if( date.Value.Kind == DateTimeKind.Unspecified )
+               {
+                  date = new DateTime( date.Value.Ticks, DateTimeKind.Utc );
+               }
+
                value = new DateTimeOffset( date.Value );
-            }
+               // For dates that table storage cannot support with an Edm type, we store them as a string
+               if ( date.Value < MinimumSupportedDateTime )
+               {
+                  var stringValue = value.Value.ToString( "O" );
+                  return new EntityProperty( stringValue );
+               }
+           }
+
             return new EntityProperty( value );
          } )
       {
@@ -140,8 +195,63 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
 
    internal class DateTimeOffsetConverter : ValueTypeConverter<DateTimeOffset>
    {
+      // The minimum datetime value allowable by Table Storage.
+      // "A 64-bit value expressed as Coordinated Universal Time (UTC). The supported DateTime range begins from 12:00 midnight, January 1, 1601 A.D. (C.E.), UTC. The range ends at December 31, 9999."
+      // source: http://msdn.microsoft.com/en-us/library/windowsazure/dd179338.aspx
+      internal static readonly DateTimeOffset MinimumSupportedDateTimeOffset = new DateTimeOffset( year: 1601, month: 1, day: 1, hour: 0, minute: 0, second: 0, offset: TimeSpan.FromTicks( 0 ) );
+
       public DateTimeOffsetConverter()
-         : base( ep => ep.DateTimeOffsetValue, o => new EntityProperty( (DateTimeOffset?) o ) )
+         : base( ep =>
+         {
+            switch ( ep.PropertyType )
+            {
+               case EdmType.DateTime:
+               {
+                  try
+                  {
+                     if ( ep.DateTimeOffsetValue.HasValue )
+                     {
+                        return ep.DateTimeOffsetValue.Value.UtcDateTime;
+                     }
+                  }
+                  catch ( ArgumentOutOfRangeException exception )
+                  {
+                     throw new InvalidOperationException( "Table storage returned a datetime that is not able to be stored in a C# DateTime. If you are using the storage emulator, this is most likely the cause of this exception.", exception );
+                  }
+                  break;
+               }
+
+               case EdmType.String:
+               {
+                  DateTimeOffset fromString;
+                  if ( !DateTimeOffset.TryParse( ep.StringValue, out fromString ) )
+                  {
+                     throw new InvalidOperationException( "Cannot interpret string as a DateTimeOffset." );
+                  }
+                  return fromString;
+               }
+
+               default:
+               {
+                  throw new InvalidOperationException( "Cannot interpret entity property as a DateTime." );
+               }
+            }
+
+            return null;
+         }, o =>
+         {
+            var dateTimeOffset = (DateTimeOffset?) o;
+            if ( dateTimeOffset.HasValue )
+            {
+               // For dates that table storage cannot support with an Edm type, we store them as a string
+               if ( dateTimeOffset.Value < MinimumSupportedDateTimeOffset )
+               {
+                  var stringValue = dateTimeOffset.Value.ToString( "O" );
+                  return new EntityProperty( stringValue );
+               }
+            }
+            return new EntityProperty( dateTimeOffset );
+         } )
       {
       }
    }

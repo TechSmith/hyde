@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Dynamic;
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Table;
 using TechSmith.Hyde.Common;
@@ -1432,6 +1433,48 @@ namespace TechSmith.Hyde.IntegrationTest
          Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
          Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
          Assert.IsFalse( asDict.ContainsKey( "Description" ) );
+      }
+
+      [TestMethod]
+      [TestCategory("Integration")]
+      public void WriteOperations_CSharpDateTimeNotCompatibleWithEdmDateTime_StillStoresDateTime()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) }); 
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue + TimeSpan.FromDays( 1000 ) });
+         _tableStorageProvider.Save();
+
+         var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
+         Assert.AreEqual( ( DateTime.MinValue + TimeSpan.FromDays( 1000 ) ).Year, retrievedItem.CreationDate.Year );
+      }
+
+      [TestMethod]
+      [TestCategory("Integration")]
+      public void WriteOperations_CSharpDateTimeMinValue_DateTimeStoredSuccessfully()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue }); 
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MinValue });
+         _tableStorageProvider.Save();
+
+         var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
+         Assert.AreEqual( DateTime.MinValue, retrievedItem.CreationDate );
+      }
+
+      [TestMethod]
+      [TestCategory( "Integration" )]
+      public void WriteOperations_CSharpDateTimeMaxValue_DateTimeStoredSuccessfully()
+      {
+         _tableStorageProvider.Add( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
+         _tableStorageProvider.Update( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
+         _tableStorageProvider.Upsert( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
+         _tableStorageProvider.Merge( _tableName, new DecoratedItemWithDateTime() { Id = "blah", Name = "another blah", CreationDate = DateTime.MaxValue } );
+         _tableStorageProvider.Save();
+
+         var retrievedItem = _tableStorageProvider.Get<DecoratedItemWithDateTime>( _tableName, "blah", "another blah" );
+         Assert.AreEqual( DateTime.MaxValue, retrievedItem.CreationDate );
       }
 
       private void EnsureOneItemInTableStorage()
