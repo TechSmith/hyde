@@ -128,6 +128,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
       // "A 64-bit value expressed as Coordinated Universal Time (UTC). The supported DateTime range begins from 12:00 midnight, January 1, 1601 A.D. (C.E.), UTC. The range ends at December 31, 9999."
       // source: http://msdn.microsoft.com/en-us/library/windowsazure/dd179338.aspx
       internal static readonly DateTime MinimumSupportedDateTime = new DateTime( year: 1601, month: 1, day: 1, hour: 0, minute: 0, second: 0, kind: DateTimeKind.Utc );
+      internal static readonly string StringSerializationPrefix = "%HYDE_DATETIME%";
       public DateTimeConverter()
          : base( 
          ep =>
@@ -151,8 +152,9 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
                }
                case EdmType.String:
                {
+                  var stringSerialized = ep.StringValue.Replace( StringSerializationPrefix, string.Empty );
                   DateTimeOffset fromString;
-                  if ( !DateTimeOffset.TryParse( ep.StringValue, out fromString ) )
+                  if ( !DateTimeOffset.TryParse( stringSerialized, out fromString ) )
                   {
                      throw new InvalidOperationException( "Cannot interpret string as a DateTime." );
                   }
@@ -182,7 +184,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
                // For dates that table storage cannot support with an Edm type, we store them as a string
                if ( date.Value < MinimumSupportedDateTime )
                {
-                  var stringValue = value.Value.ToString( "O" );
+                  var stringValue = StringSerializationPrefix + value.Value.ToString( "O" );
                   return new EntityProperty( stringValue );
                }
            }
@@ -199,7 +201,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
       // "A 64-bit value expressed as Coordinated Universal Time (UTC). The supported DateTime range begins from 12:00 midnight, January 1, 1601 A.D. (C.E.), UTC. The range ends at December 31, 9999."
       // source: http://msdn.microsoft.com/en-us/library/windowsazure/dd179338.aspx
       internal static readonly DateTimeOffset MinimumSupportedDateTimeOffset = new DateTimeOffset( year: 1601, month: 1, day: 1, hour: 0, minute: 0, second: 0, offset: TimeSpan.FromTicks( 0 ) );
-
+      internal static readonly string StringSerializationPrefix = "%HYDE_DATETIMEOFFSET%";
       public DateTimeOffsetConverter()
          : base( ep =>
          {
@@ -223,12 +225,13 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
 
                case EdmType.String:
                {
+                  var stringSerialized = ep.StringValue.Replace( StringSerializationPrefix, string.Empty );
                   DateTimeOffset fromString;
-                  if ( !DateTimeOffset.TryParse( ep.StringValue, out fromString ) )
+                  if ( !DateTimeOffset.TryParse( stringSerialized, out fromString ) )
                   {
                      throw new InvalidOperationException( "Cannot interpret string as a DateTimeOffset." );
                   }
-                  return fromString;
+                  return fromString.UtcDateTime;
                }
 
                default:
@@ -246,7 +249,7 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
                // For dates that table storage cannot support with an Edm type, we store them as a string
                if ( dateTimeOffset.Value < MinimumSupportedDateTimeOffset )
                {
-                  var stringValue = dateTimeOffset.Value.ToString( "O" );
+                  var stringValue = StringSerializationPrefix + dateTimeOffset.Value.ToString( "O" );
                   return new EntityProperty( stringValue );
                }
             }

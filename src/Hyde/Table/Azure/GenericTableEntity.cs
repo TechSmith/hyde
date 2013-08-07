@@ -24,7 +24,37 @@ namespace TechSmith.Hyde.Table.Azure
            { EdmType.Guid, p => p.GuidValue.HasValue ? p.GuidValue.Value : (Guid?) null },
            { EdmType.Int32, p => p.Int32Value.HasValue ? p.Int32Value.Value : (int?) null },
            { EdmType.Int64, p => p.Int64Value.HasValue ? p.Int64Value.Value : (long?) null },
-           { EdmType.String, p => p.StringValue },
+           { EdmType.String, p =>
+           {
+              if ( p.StringValue == null )
+              {
+                 return p.StringValue;
+              }
+
+               if ( p.StringValue.StartsWith( "%HYDE_DATETIME%", StringComparison.Ordinal ) )
+               {
+                  var stringSerialized = p.StringValue.Replace( "%HYDE_DATETIME%", string.Empty );
+                  DateTimeOffset fromString;
+                  if ( !DateTimeOffset.TryParse( stringSerialized, out fromString ) )
+                  {
+                     throw new InvalidOperationException( "Cannot interpret string as a DateTimeOffset." );
+                  }
+                  return fromString.UtcDateTime;
+               }
+
+               if ( p.StringValue.StartsWith( "%HYDE_DATETIMEOFFSET%", StringComparison.Ordinal ) )
+               {
+                  var stringSerialized = p.StringValue.Replace( "%HYDE_DATETIMEOFFSET%", string.Empty );
+                  DateTimeOffset fromString;
+                  if ( !DateTimeOffset.TryParse( stringSerialized, out fromString ) )
+                  {
+                     throw new InvalidOperationException( "Cannot interpret string as a DateTimeOffset." );
+                  }
+                  return fromString.UtcDateTime;
+               }
+
+              return p.StringValue;
+           } },
         };
 
       public string PartitionKey

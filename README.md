@@ -54,3 +54,9 @@ Follow these guidelines, in no particular order, to improve your chances of havi
  * No regions
  * Code must build .NET 4.
  * If you didn't write the code you must provide a reference to where you obtained it and the license. 
+
+### FAQ - Technical Details 
+**Looking at my tables in Azure Table Storage, I notice that some fields contain the prefix "%HYDE_DATETIME%" while others do not. What's up with that?**  
+The C# DateTime struct supports a range from year 0001 to year 9999, while Table Storage only supports DateTimes from year 1601 to year 9999. To work around 
+this, if we cannot store a C# DateTime using a corresponding Table Storage DateTime, we store it as a string and tag it with its corresponding C# structure so that
+we can retrieve it as the appropriate type in the future.

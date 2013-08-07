@@ -64,6 +64,23 @@ namespace TechSmith.Hyde.IntegrationTest
       }
 
       [TestMethod, TestCategory( "Integration" )]
+      public void Get_ObjectInsertedContainsDateTimeOutOfEdmRange_DateTimePropretyIsRetrievedDynamicallyAsDateTime()
+      {
+         var item = new DecoratedItemWithDateTime()
+         {
+            CreationDate = new DateTime( 1000, 1, 1, 1, 1, 1, 1, DateTimeKind.Local ),
+            Id = "pk",
+            Name = "rk",
+         };
+
+         _tableStorageProvider.Add( _tableName, item );
+         _tableStorageProvider.Save();
+
+         var retrievedObject = _tableStorageProvider.Get( _tableName, "pk", "rk" );
+         Assert.AreEqual( new DateTime( 1000, 1, 1, 1, 1, 1, 1, DateTimeKind.Local ), retrievedObject.CreationDate.ToLocalTime() );
+      }
+
+      [TestMethod, TestCategory( "Integration" )]
       public void Get_RetrievingObjectViaDynamic_ShouldHydrateEntityWithAllProperties()
       {
          var simpleEntity = new DecoratedItem
