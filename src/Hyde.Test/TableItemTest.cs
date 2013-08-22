@@ -38,7 +38,8 @@ namespace TechSmith.Hyde.Test
       }
 
       [TestMethod]
-      public void CreateAndIgnoreReservedProperty_KeysProvidedAndHasReservedProperty_IgnoresReservedProperty()
+      [ExpectedException( typeof( ArgumentException ) )]
+      public void CreateAndIgnoreReservedProperty_KeysProvidedAndHasADifferentParitionKeyProperty_ThrowsArgumentException()
       {
          var item = TableItem.Create( new ClassWithUndecoratedPartitionKey { Name = "Joe", PartitionKey = "should be ignored" }, "pk", "rk", TableItem.ReservedPropertyBehavior.Ignore );
 
