@@ -113,6 +113,7 @@ namespace TechSmith.Hyde.Table.Azure
 
          genericEntity.PartitionKey = tableItem.PartitionKey;
          genericEntity.RowKey = tableItem.RowKey;
+		 genericEntity.Timestamp = tableItem.Timestamp;
          genericEntity.ETag = tableItem.ETag == null ? null : tableItem.ETag.ToString();
 
          return genericEntity;
@@ -149,6 +150,7 @@ namespace TechSmith.Hyde.Table.Azure
 
          ( (IDictionary<string, object>) newItem ).Add( "PartitionKey", PartitionKey );
          ( (IDictionary<string, object>) newItem ).Add( "RowKey", RowKey );
+		 ( (IDictionary<string, object>) newItem ).Add( "Timestamp", Timestamp);
          if ( includeETag )
          {
             ( (IDictionary<string, object>) newItem ).Add( "ETag", ETag );
@@ -208,6 +210,12 @@ namespace TechSmith.Hyde.Table.Azure
          {
             eTagProperty.SetValue( newItem, ETag, null );
          }
+
+		 var timeStampProperty = newItem.FindPropertyDecoratedWith<TimestampAttribute>();
+		 if (timeStampProperty != null)
+		 {
+			 timeStampProperty.SetValue(newItem, Timestamp, null);
+		 }
       }
    }
 }

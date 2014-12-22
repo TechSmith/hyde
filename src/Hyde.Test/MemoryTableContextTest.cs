@@ -238,9 +238,10 @@ namespace TechSmith.Hyde.Test
          var result = _context.CreateQuery( "table", false ).PartitionKeyEquals( "abc" ).RowKeyEquals( "Hello" );
          var asDict = (IDictionary<string, object>) result.First();
 
-         Assert.AreEqual( 2, asDict.Count() );
+         Assert.AreEqual( 3, asDict.Count() );
          Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
          Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
+		 Assert.IsTrue( asDict.ContainsKey("Timestamp"));
          Assert.IsFalse( asDict.ContainsKey( "Description" ) );
          Assert.IsFalse( asDict.ContainsKey( "ETag" ) );
       }
@@ -909,9 +910,10 @@ namespace TechSmith.Hyde.Test
          var result = _context.CreateQuery( "table", false ).PartitionKeyEquals( "abc" ).RowKeyEquals( "Hello" );
          var asDict = (IDictionary<string, object>) result.First();
 
-         Assert.AreEqual( 2, asDict.Count() );
+         Assert.AreEqual( 3, asDict.Count() );
          Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
          Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
+		 Assert.IsTrue( asDict.ContainsKey( "Timestamp" ) );
          Assert.IsFalse( asDict.ContainsKey( "Description" ) );
          Assert.IsFalse( asDict.ContainsKey( "ETag" ) );
       }

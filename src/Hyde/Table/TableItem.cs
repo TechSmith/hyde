@@ -29,6 +29,12 @@ namespace TechSmith.Hyde.Table
          private set;
       }
 
+	  public DateTimeOffset Timestamp
+	  {
+		  get;
+		  private set;
+	  }
+
       public object ETag
       {
          get;
@@ -72,6 +78,14 @@ namespace TechSmith.Hyde.Table
                }
                RowKey = (string) rowKeyProperty.Item1;
             }
+			else if (propertyName == TableConstants.Timestamp)
+			{
+			   var timeStampProperty = properties[propertyName];
+			   if (timeStampProperty.Item2 != typeof(DateTimeOffset))
+			   {
+				   Timestamp = (DateTimeOffset)timeStampProperty.Item1;
+			   }
+			}
             else if ( propertyName == TableConstants.ETag )
             {
                var eTagProperty = properties[propertyName];
@@ -179,6 +193,11 @@ namespace TechSmith.Hyde.Table
          {
             item.RowKey = entity.ReadPropertyDecoratedWith<RowKeyAttribute, string>();
          }
+
+		 if (entity.HasPropertyDecoratedWith<TimestampAttribute>())
+		 {
+			 item.Timestamp = entity.ReadPropertyDecoratedWith<TimestampAttribute, DateTimeOffset>();
+		 }
 
          if ( entity.HasPropertyDecoratedWith<ETagAttribute>() )
          {

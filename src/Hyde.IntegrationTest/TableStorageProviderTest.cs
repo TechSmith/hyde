@@ -1817,11 +1817,50 @@ namespace TechSmith.Hyde.IntegrationTest
 
          var result = _tableStorageProvider.Get( _tableName, "0", "1" );
          var asDict = result as IDictionary<string, object>;
-         Assert.AreEqual( 2, asDict.Count() );
+         Assert.AreEqual( 3, asDict.Count() );
          Assert.IsTrue( asDict.ContainsKey( "PartitionKey" ) );
          Assert.IsTrue( asDict.ContainsKey( "RowKey" ) );
+		 Assert.IsTrue( asDict.ContainsKey( "Timestamp" ) );
          Assert.IsFalse( asDict.ContainsKey( "Description" ) );
       }
+
+	  [TestMethod]
+	  [TestCategory("Integration")]
+	  public void Get_EntityIsSerialized_DynamicResponseContainsValidTimestampProperty()
+	  {
+		  _tableStorageProvider.Add(_tableName, new DecoratedItem
+		  {
+			  Id = "0",
+			  Name = "1"
+		  });
+		  _tableStorageProvider.Save();
+
+		  var result = _tableStorageProvider.Get(_tableName, "0", "1");
+		  var asDict = result as IDictionary<string, object>;
+		  Assert.AreEqual(4, asDict.Count());
+
+		  var ts = (DateTimeOffset)asDict["Timestamp"];
+
+		  Assert.IsNotNull(ts);
+		  Assert.IsTrue(ts > DateTimeOffset.MinValue);
+	  }
+
+	  [TestMethod]
+	  [TestCategory("Integration")]
+	  public void Get_EntityIsSerialized_ResponseContainsValidTimestampProperty()
+	  {
+		  _tableStorageProvider.Add(_tableName, new DecoratedItem
+		  {
+			  Id = "0",
+			  Name = "1"
+		  });
+		  _tableStorageProvider.Save();
+
+		  var result = _tableStorageProvider.Get<DecoratedItemWithTimestamp>(_tableName, "0", "1");
+		  Assert.IsNotNull(result.Timestamp);
+		  Assert.IsTrue(result.Timestamp > DateTimeOffset.MinValue);
+	  }
+
 
       [TestMethod]
       [TestCategory( "Integration" )]
