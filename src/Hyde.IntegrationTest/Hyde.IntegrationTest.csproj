@@ -89,6 +89,7 @@
     <Compile Include="DecoratedItemWithDateTime.cs" />
     <Compile Include="DecoratedItemWithETag.cs" />
     <Compile Include="DecoratedItemWithNullableProperty.cs" />
+    <Compile Include="DecoratedItemWithTimestamp.cs" />
     <Compile Include="DynamicPropertyBag.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RowPointer.cs" />

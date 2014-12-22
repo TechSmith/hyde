@@ -109,6 +109,7 @@
     <Compile Include="DecoratedItemWithDateTime.cs" />
     <Compile Include="DecoratedItemWithETag.cs" />
     <Compile Include="DecoratedItemWithNullableProperty.cs" />
+    <Compile Include="DecoratedItemWithTimestamp.cs" />
     <Compile Include="DynamicPropertyBag.cs" />
     <Compile Include="GenericTableEntityTests.cs" />
     <Compile Include="MemoryTableContextTest.cs" />

@@ -1375,6 +1375,44 @@ namespace TechSmith.Hyde.Test
          Assert.AreEqual( DateTime.MaxValue, retrievedItem.CreationDate );
       }
 
+	  [TestMethod]
+	  public void Get_ItemWithTimestmapPropertyInStore_ItemReturnedWithTimestamp()
+	  {
+		  var decoratedTimestampItem = new DecoratedItemWithTimestamp
+		  {
+			  Id = "someId",
+			  Name = "someName",
+			  Age = 12
+		  };
+
+		  _tableStorageProvider.Add(_tableName, decoratedTimestampItem);
+		  _tableStorageProvider.Save();
+
+		  var actualItem = _tableStorageProvider.Get<DecoratedItemWithTimestamp>(_tableName, "someId", "someName");
+		  Assert.IsNotNull(actualItem.Timestamp);
+		  Assert.IsTrue(actualItem.Timestamp > DateTimeOffset.MinValue);
+	  }
+
+	  [TestMethod]
+	  public void Get_RetreiveAsDynamic_DynamicItemHasTimestampProperty()
+	  {
+		  var decoratedItem = new DecoratedItem
+		  {
+			  Id = "id",
+			  Name = "name",
+			  Age = 33
+		  };
+
+		  _tableStorageProvider.Add(_tableName, decoratedItem);
+		  _tableStorageProvider.Save();
+
+		  var actualItem = _tableStorageProvider.Get(_tableName, "id", "name");
+		  var itemAsDict = actualItem as IDictionary<string, object>;
+		  Assert.IsTrue(itemAsDict.ContainsKey("Timestamp"));
+		  Assert.IsTrue(actualItem.Timestamp > DateTimeOffset.MinValue);
+	  }
+
+
       private void EnsureItemsInContext( TableStorageProvider tableStorageProvider, int count )
       {
          for ( int i = 0; i < count; i++ )

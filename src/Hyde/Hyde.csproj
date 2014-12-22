@@ -83,6 +83,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\DataAnnotations\ETagAttribute.cs" />
+    <Compile Include="Common\DataAnnotations\TimestampAttribute.cs" />
     <Compile Include="Common\EntityHasBeenChangedException.cs" />
     <Compile Include="Common\IPartialResultTaskExtensions.cs" />
     <Compile Include="Table\AbstractQuery.cs" />

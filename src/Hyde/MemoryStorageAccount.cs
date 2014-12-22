@@ -22,6 +22,7 @@ namespace TechSmith.Hyde
                   throw new EntityAlreadyExistsException();
                }
                entity.ETag = GetNewETag();
+			   entity.Timestamp = DateTimeOffset.UtcNow;
                _entities[entity.RowKey] = entity;
             }
          }
@@ -39,6 +40,7 @@ namespace TechSmith.Hyde
                   throw new EntityHasBeenChangedException();
                }
                entity.ETag = GetNewETag();
+			   entity.Timestamp = DateTimeOffset.UtcNow;
                _entities[entity.RowKey] = entity;
             }
          }
@@ -68,6 +70,7 @@ namespace TechSmith.Hyde
             lock ( _entities )
             {
                entity.ETag = GetNewETag();
+			   entity.Timestamp = DateTimeOffset.UtcNow;
                _entities[entity.RowKey] = entity;
             }
          }
@@ -91,6 +94,7 @@ namespace TechSmith.Hyde
                   currentEntity.SetProperty( property.Key, property.Value );
                }
                currentEntity.ETag = GetNewETag();
+			   currentEntity.Timestamp = DateTimeOffset.UtcNow;
             }
          }
 
