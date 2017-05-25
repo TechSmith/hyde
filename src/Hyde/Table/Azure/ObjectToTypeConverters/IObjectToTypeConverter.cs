@@ -1,20 +1,29 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Reflection;
+
 using Microsoft.WindowsAzure.Storage.Table;
 
 namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
 {
-   internal interface IObjectToTypeConverter
+   /// <summary>
+   /// Defines the interface for Object to Type converters.
+   /// </summary>
+   public interface IObjectToTypeConverter
    {
       object ConvertToValue( EntityProperty entityProperty, PropertyInfo propertyInfo );
+
       bool CanConvertType( Type type );
+
       IEnumerable<Type> GetSupportedTypes();
+
       EntityProperty ConvertToEntityProperty( object rawItem, Type rawItemType );
    }
 
-   internal abstract class ReferenceTypeConverter<T> : IObjectToTypeConverter
+   /// <summary>
+   /// Defines an abstract base-class for all Reference Type converters.
+   /// </summary>
+   public abstract class ReferenceTypeConverter<T> : IObjectToTypeConverter
    {
       private readonly Func<EntityProperty, T> _toValue;
       private readonly Func<object, EntityProperty> _toEntityProperty;
@@ -58,7 +67,10 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
       }
    }
 
-   internal abstract class ValueTypeConverter<T> : IObjectToTypeConverter where T : struct
+   /// <summary>
+   /// Defines an abstract base-class for all Value Type converters.
+   /// </summary>
+   public abstract class ValueTypeConverter<T> : IObjectToTypeConverter where T : struct
    {
       private readonly Func<EntityProperty, T?> _toValue;
       private readonly Func<object, EntityProperty> _toEntityProperty;

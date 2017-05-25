@@ -1,3 +1,4 @@
+using Hyde;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,7 +7,7 @@ using System.Reflection;
 
 namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
 {
-   internal class ObjectConverterFactory
+   public class ObjectConverterFactory
    {
       private static readonly ConcurrentDictionary<Type, IObjectToTypeConverter> _objectToTypeConverters = GetObjectToTypeConverters();
 
@@ -23,6 +24,16 @@ namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
          }
 
          return _objectToTypeConverters[type];
+      }
+
+      public static void RegisterConverter( Type type, IObjectToTypeConverter converter )
+      {
+         if ( _objectToTypeConverters.ContainsKey( type ) )
+         {
+            throw new ConverterAlreadyRegisteredException( string.Format("Converter already registered for type {0}", type.Name ) );
+         }
+
+         _objectToTypeConverters[type] = converter;
       }
 
       private static ConcurrentDictionary<Type, IObjectToTypeConverter> GetObjectToTypeConverters()
