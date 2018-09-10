@@ -1,8 +1,8 @@
-using System.Data.Services.Client;
+using TechSmith.Hyde.Common;
 
 namespace TechSmith.Hyde.Table.Azure
 {
-   internal class AzureKeyValidator
+   internal static class AzureKeyValidator
    {
       public static void ValidatePartitionKey( string partitionKey )
       {
@@ -27,7 +27,7 @@ namespace TechSmith.Hyde.Table.Azure
 
          if ( invalid )
          {
-            throw new DataServiceRequestException( "Invalid key specified. Invalid characters in key" );
+            throw new InvalidEntityException( "Invalid key specified. Invalid characters in key" );
          }
       }
 
@@ -39,7 +39,7 @@ namespace TechSmith.Hyde.Table.Azure
 
          if ( invalid )
          {
-            throw new DataServiceRequestException( "Invalid key specified. Key length is above 512 characters." );
+            throw new InvalidEntityException( "Invalid key specified. Key length is above 512 characters." );
          }
       }
    }

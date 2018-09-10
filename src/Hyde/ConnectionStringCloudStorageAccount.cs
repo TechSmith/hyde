@@ -1,5 +1,4 @@
-﻿using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
+﻿using Microsoft.Azure.Cosmos.Table;
 
 namespace TechSmith.Hyde
 {
