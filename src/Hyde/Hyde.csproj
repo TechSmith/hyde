@@ -11,15 +11,16 @@
     <AssemblyName>TechSmith.Hyde</AssemblyName>
     <PackageId>TechSmith.Hyde</PackageId>
     <PackageTags>TechSmith;Azure;Storage;Table Storage;Azure Table</PackageTags>
-    <PackageReleaseNotes>* (9.1.0) Retargeted .net standard 1.6 and .net 4.6. Lowest .net framework supported is now .net 4.6.0.
-* (9.0.0) Added .net core support targeting .net standard 1.5. Lowest .net framework supported is now .net 4.6.2. Removed methods previously marked as obsolete and removed all synchronous methods.</PackageReleaseNotes>
+    <PackageReleaseNotes>* (9.1.1) Update storage dependencies to version 5.8.4.
+    * (9.1.0) Retargeted .net standard 1.6 and .net 4.6. Lowest .net framework supported is now .net 4.6.0.
+    * (9.0.0) Added .net core support targeting .net standard 1.5. Lowest .net framework supported is now .net 4.6.2. Removed methods previously marked as obsolete and removed all synchronous methods.</PackageReleaseNotes>
     <PackageProjectUrl>http://techsmith.github.com/hyde</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.github.com/TechSmith/hyde/master/LICENSE.txt</PackageLicenseUrl>
     <NetStandardImplicitPackageVersion>1.6.0</NetStandardImplicitPackageVersion>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>9.1.0</Version>
+    <Version>9.1.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
