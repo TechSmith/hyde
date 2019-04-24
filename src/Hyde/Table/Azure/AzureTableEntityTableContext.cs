@@ -279,7 +279,7 @@ namespace TechSmith.Hyde.Table.Azure
          Uri primaryEndpoint = new Uri( _storageAccount.TableEndpoint );
          StorageUri storageUri = hasSecondaryEndpoint ? new StorageUri( primaryEndpoint, new Uri( _storageAccount.ReadonlyFallbackTableEndpoint ) ) : new StorageUri( primaryEndpoint );
 
-         var cloudTableClient = new CloudTableClient( storageUri, _storageAccount.Credentials );
+         var cloudTableClient = new CloudTableClient( storageUri, _storageAccount.Credentials, _storageAccount.TableClientConfiguration );
 
          if ( hasSecondaryEndpoint )
          {

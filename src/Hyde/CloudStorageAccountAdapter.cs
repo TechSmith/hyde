@@ -14,6 +14,11 @@ namespace TechSmith.Hyde
          _account = account;
       }
 
+      public CloudStorageAccountAdapter( CloudStorageAccount account, TableClientConfiguration tableClientConfiguration ) : this( account )
+      {
+         TableClientConfiguration = tableClientConfiguration;
+      }
+
       public string TableEndpoint
       {
          get
@@ -36,6 +41,11 @@ namespace TechSmith.Hyde
          {
             return _account.Credentials;
          }
+      }
+
+      public TableClientConfiguration TableClientConfiguration
+      {
+         get;
       }
    }
 }

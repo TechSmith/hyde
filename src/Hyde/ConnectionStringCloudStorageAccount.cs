@@ -11,6 +11,11 @@ namespace TechSmith.Hyde
          _cloudStorageAccount = CloudStorageAccount.Parse( connectionString );
       }
 
+      public ConnectionStringCloudStorageAccount( string connectionString, TableClientConfiguration tableClientConfiguration ) : this( connectionString )
+      {
+         TableClientConfiguration = tableClientConfiguration;
+      }
+
       public string TableEndpoint
       {
          get
@@ -33,6 +38,11 @@ namespace TechSmith.Hyde
          {
             return _cloudStorageAccount.Credentials;
          }
+      }
+
+      public TableClientConfiguration TableClientConfiguration
+      {
+         get;
       }
    }
 }

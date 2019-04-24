@@ -18,5 +18,10 @@ namespace TechSmith.Hyde
       {
          get;
       }
+
+      TableClientConfiguration TableClientConfiguration
+      {
+         get;
+      }
    }
 }
