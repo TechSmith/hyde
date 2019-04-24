@@ -17,10 +17,7 @@ namespace TechSmith.Hyde.Common
       {
          var attrType = typeof( T );
          var objType = obj.GetType();
-         var bindingFlags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
-         var props = objType.GetTypeInfo().GetProperties( bindingFlags )
-                            .Where( p => p.GetCustomAttributes( attrType, inherit: true ).Any() )
-                            .ToArray();
+         var props = objType.GetProperties().Where( prop => Attribute.IsDefined( prop, attrType ) ).ToArray();
 
          if ( props.Length == 0 )
          {

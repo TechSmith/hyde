@@ -1,4 +1,4 @@
-using Microsoft.WindowsAzure.Storage.Auth;
+using Microsoft.Azure.Cosmos.Table;
 
 namespace TechSmith.Hyde
 {
@@ -15,6 +15,11 @@ namespace TechSmith.Hyde
       }
 
       StorageCredentials Credentials
+      {
+         get;
+      }
+
+      TableClientConfiguration TableClientConfiguration
       {
          get;
       }

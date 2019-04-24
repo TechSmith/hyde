@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
-using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.RetryPolicies;
-using Microsoft.WindowsAzure.Storage.Table;
+using Microsoft.Azure.Cosmos.Table;
 using TechSmith.Hyde.Common;
 
 namespace TechSmith.Hyde.Table.Azure
@@ -165,7 +163,7 @@ namespace TechSmith.Hyde.Table.Azure
 
             if ( ex.RequestInformation.HttpStatusCode == (int) HttpStatusCode.BadRequest &&
                  isUnbatchedDelete &&
-                 ex.RequestInformation.ExtendedErrorInformation.ErrorCode == "OutOfRangeInput" )
+                 ex.RequestInformation.ErrorCode == "OutOfRangeInput" )
             {
                // The table does not exist.
                return;
@@ -281,7 +279,7 @@ namespace TechSmith.Hyde.Table.Azure
          Uri primaryEndpoint = new Uri( _storageAccount.TableEndpoint );
          StorageUri storageUri = hasSecondaryEndpoint ? new StorageUri( primaryEndpoint, new Uri( _storageAccount.ReadonlyFallbackTableEndpoint ) ) : new StorageUri( primaryEndpoint );
 
-         var cloudTableClient = new CloudTableClient( storageUri, _storageAccount.Credentials );
+         var cloudTableClient = new CloudTableClient( storageUri, _storageAccount.Credentials, _storageAccount.TableClientConfiguration );
 
          if ( hasSecondaryEndpoint )
          {

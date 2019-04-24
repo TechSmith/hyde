@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using Microsoft.Azure.Cosmos.Table;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.WindowsAzure.Storage.Table;
 using TechSmith.Hyde.Table;
 using TechSmith.Hyde.Table.Azure;
 

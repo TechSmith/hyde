@@ -21,5 +21,10 @@ namespace TechSmith.Hyde.IntegrationTest
       {
          return new ConnectionStringCloudStorageAccount( Current["storageConnectionString"] );
       }
+
+      public static ICloudStorageAccount GetTestCosmosStorageAccount()
+      {
+         return new ConnectionStringCloudStorageAccount( Current["cosmosConnectionString"] );
+      }
    }
 }

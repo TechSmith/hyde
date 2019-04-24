@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace TechSmith.Hyde.Table.Azure.ObjectToTypeConverters
 {
-   internal class ObjectConverterFactory
+   internal static class ObjectConverterFactory
    {
       private static readonly ConcurrentDictionary<Type, IObjectToTypeConverter> _objectToTypeConverters = GetObjectToTypeConverters();
 

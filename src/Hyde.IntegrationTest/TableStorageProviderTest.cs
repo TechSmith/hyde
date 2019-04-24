@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Cosmos.Table;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.WindowsAzure.Storage.Blob;
-using Microsoft.WindowsAzure.Storage.Table;
 using TechSmith.Hyde.Common;
 using TechSmith.Hyde.Common.DataAnnotations;
 using TechSmith.Hyde.Table;
@@ -170,7 +169,7 @@ namespace TechSmith.Hyde.IntegrationTest
 
       public class TypeWithUnsupportedProperty
       {
-         public CloudBlockBlob FirstType
+         public MemoryStorageAccount FirstType
          {
             get;
             set;

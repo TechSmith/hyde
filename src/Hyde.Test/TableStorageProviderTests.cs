@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data.Services.Client;
 using System.Dynamic;
 using System.Globalization;
 using System.Linq;
@@ -65,7 +64,7 @@ namespace TechSmith.Hyde.Test
 
          string invalidPartitionKey = "/";
          _tableStorageProvider.Add( _tableName, item, invalidPartitionKey, _rowKey );
-         await AsyncAssert.ThrowsAsync<DataServiceRequestException>( () => _tableStorageProvider.SaveAsync() );
+         await AsyncAssert.ThrowsAsync<InvalidEntityException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestMethod]
@@ -79,7 +78,7 @@ namespace TechSmith.Hyde.Test
 
          string partitionKeyThatIsLongerThan256Characters = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
          _tableStorageProvider.Add( _tableName, item, partitionKeyThatIsLongerThan256Characters, _rowKey );
-         await AsyncAssert.ThrowsAsync<DataServiceRequestException>( () => _tableStorageProvider.SaveAsync() );
+         await AsyncAssert.ThrowsAsync<InvalidEntityException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestMethod]
@@ -93,7 +92,7 @@ namespace TechSmith.Hyde.Test
 
          string invalidRowKey = "/";
          _tableStorageProvider.Add( _tableName, item, _partitionKey, invalidRowKey );
-         await AsyncAssert.ThrowsAsync<DataServiceRequestException>( () => _tableStorageProvider.SaveAsync() );
+         await AsyncAssert.ThrowsAsync<InvalidEntityException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestMethod]
@@ -107,7 +106,7 @@ namespace TechSmith.Hyde.Test
 
          string rowKeyThatIsLongerThan256Characters = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
          _tableStorageProvider.Add( _tableName, item, _partitionKey, rowKeyThatIsLongerThan256Characters );
-         await AsyncAssert.ThrowsAsync<DataServiceRequestException>( () => _tableStorageProvider.SaveAsync() );
+         await AsyncAssert.ThrowsAsync<InvalidEntityException>( () => _tableStorageProvider.SaveAsync() );
       }
 
       [TestMethod]

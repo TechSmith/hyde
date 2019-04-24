@@ -1,5 +1,4 @@
-﻿using Microsoft.WindowsAzure.Storage;
-using Microsoft.WindowsAzure.Storage.Auth;
+﻿using Microsoft.Azure.Cosmos.Table;
 
 namespace TechSmith.Hyde
 {
@@ -10,6 +9,11 @@ namespace TechSmith.Hyde
       public ConnectionStringCloudStorageAccount( string connectionString )
       {
          _cloudStorageAccount = CloudStorageAccount.Parse( connectionString );
+      }
+
+      public ConnectionStringCloudStorageAccount( string connectionString, TableClientConfiguration tableClientConfiguration ) : this( connectionString )
+      {
+         TableClientConfiguration = tableClientConfiguration;
       }
 
       public string TableEndpoint
@@ -34,6 +38,11 @@ namespace TechSmith.Hyde
          {
             return _cloudStorageAccount.Credentials;
          }
+      }
+
+      public TableClientConfiguration TableClientConfiguration
+      {
+         get;
       }
    }
 }
