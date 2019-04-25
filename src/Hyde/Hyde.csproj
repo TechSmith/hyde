@@ -18,7 +18,7 @@
        * (9.0.0) Added .net core support targeting .net standard 1.5. Lowest .net framework supported is now .net 4.6.2. Removed methods previously marked as obsolete and removed all synchronous methods.
     </PackageReleaseNotes>
     <PackageProjectUrl>http://techsmith.github.com/hyde</PackageProjectUrl>
-    <PackageLicenseUrl>https://raw.github.com/TechSmith/hyde/master/LICENSE.txt</PackageLicenseUrl>
+    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
     <Version>10.0.0</Version>
   </PropertyGroup>
 
