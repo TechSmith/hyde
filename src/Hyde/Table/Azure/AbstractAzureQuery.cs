@@ -53,13 +53,13 @@ namespace TechSmith.Hyde.Table.Azure
 
          public bool HasMoreResults { get { return _segment.ContinuationToken != null; } }
 
-         public Task<IPartialResult<T>> GetNextAsync()
+         public async Task<IPartialResult<T>> GetNextAsync()
          {
             if ( !HasMoreResults )
             {
                throw new InvalidOperationException( "Cannot get next when there are no more results" );
             }
-            return _parent.GetPartialResultAsync( _query, _segment.ContinuationToken );
+            return await _parent.GetPartialResultAsync( _query, _segment.ContinuationToken ).ConfigureAwait( false );
          }
 
          public IEnumerator<T> GetEnumerator()

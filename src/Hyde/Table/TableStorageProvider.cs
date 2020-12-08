@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TechSmith.Hyde.Common;
@@ -86,31 +85,36 @@ namespace TechSmith.Hyde.Table
          _context.AddNewItem( tableName, TableItem.Create( instance, _reservedPropertyBehavior ) );
       }
 
-      public Task<T> GetAsync<T>( string tableName, string partitionKey, string rowKey ) where T : new()
+      public async Task<T> GetAsync<T>( string tableName, string partitionKey, string rowKey ) where T : new()
       {
-         return _context.CreateQuery<T>( tableName )
+         T[] result = ( await _context.CreateQuery<T>( tableName )
                         .PartitionKeyEquals( partitionKey )
                         .RowKeyEquals( rowKey )
                         .PartialAsync()
-                        .ContinueWith( task => EndGetAsync( task, partitionKey, rowKey ) );
-      }
-
-      public Task<dynamic> GetAsync( string tableName, string partitionKey, string rowKey )
-      {
-         return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics )
-                        .PartitionKeyEquals( partitionKey )
-                        .RowKeyEquals( rowKey )
-                        .PartialAsync()
-                        .ContinueWith( task => EndGetAsync( task, partitionKey, rowKey ) );
-      }
-
-      private static T EndGetAsync<T>( Task<IPartialResult<T>> task, string pk, string rk )
-      {
-         var result = task.Result.ToArray();
+                        .ConfigureAwait( false ) )
+                        .ToArray();
          if ( result.Length == 0 )
          {
-            throw new EntityDoesNotExistException( pk, rk, null );
+            throw new EntityDoesNotExistException( partitionKey, rowKey, null );
          }
+
+         return result[0];
+      }
+
+      public async Task<dynamic> GetAsync( string tableName, string partitionKey, string rowKey )
+      {
+         var result = ( await _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics )
+                        .PartitionKeyEquals( partitionKey )
+                        .RowKeyEquals( rowKey )
+                        .PartialAsync()
+                        .ConfigureAwait( false ) )
+                        .ToArray();
+
+         if ( result.Length == 0 )
+         {
+            throw new EntityDoesNotExistException( partitionKey, rowKey, null );
+         }
+
          return result[0];
       }
 
@@ -135,14 +139,14 @@ namespace TechSmith.Hyde.Table
          return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics );
       }
 
-      public Task SaveAsync()
+      public async Task SaveAsync()
       {
-         return SaveAsync( Execute.Individually );
+         await SaveAsync( Execute.Individually ).ConfigureAwait( false );
       }
 
-      public Task SaveAsync( Execute executeMethod )
+      public async Task SaveAsync( Execute executeMethod )
       {
-         return _context.SaveAsync( executeMethod );
+         await _context.SaveAsync( executeMethod ).ConfigureAwait( false );
       }
 
       /// <summary>
