@@ -98,11 +98,11 @@ namespace TechSmith.Hyde.Table.Azure
          _operations.Enqueue( new ExecutableTableOperation( tableName, operation, TableOperationType.Delete, tableItem.PartitionKey, tableItem.RowKey ) );
       }
 
-      public Task SaveAsync( Execute executeMethod )
+      public async Task SaveAsync( Execute executeMethod )
       {
          if ( !_operations.Any() )
          {
-            return Task.FromResult( 0 );
+            return;
          }
 
          try
@@ -111,15 +111,18 @@ namespace TechSmith.Hyde.Table.Azure
             {
                case Execute.Individually:
                {
-                  return SaveIndividualAsync( new List<ExecutableTableOperation>( _operations ) );
+                  await SaveIndividualAsync( new List<ExecutableTableOperation>( _operations ) ).ConfigureAwait( false );
+                  return;
                }
                case Execute.InBatches:
                {
-                  return SaveBatchAsync( new List<ExecutableTableOperation>( _operations ) );
+                  await SaveBatchAsync( new List<ExecutableTableOperation>( _operations ) ).ConfigureAwait( false );
+                  return;
                }
                case Execute.Atomically:
                {
-                  return SaveAtomicallyAsync( new List<ExecutableTableOperation>( _operations ) );
+                  await SaveAtomicallyAsync( new List<ExecutableTableOperation>( _operations ) ).ConfigureAwait( false );
+                  return;
                }
                default:
                {
@@ -266,7 +269,7 @@ namespace TechSmith.Hyde.Table.Azure
          var batchOperation = ValidateAndCreateBatchOperation( operations, out table );
          if ( batchOperation.Count == 0 )
          {
-            return Task.FromResult( 0 );
+            return Task.CompletedTask;
          }
 
          return HandleTableStorageExceptions( false, table.ExecuteBatchAsync( batchOperation, _retriableTableRequest, null ) );

@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TechSmith.Hyde.Common;
@@ -140,14 +139,14 @@ namespace TechSmith.Hyde.Table
          return _context.CreateQuery( tableName, ShouldIncludeETagWithDynamics );
       }
 
-      public Task SaveAsync()
+      public async Task SaveAsync()
       {
-         return SaveAsync( Execute.Individually );
+         await SaveAsync( Execute.Individually ).ConfigureAwait( false );
       }
 
-      public Task SaveAsync( Execute executeMethod )
+      public async Task SaveAsync( Execute executeMethod )
       {
-         return _context.SaveAsync( executeMethod );
+         await _context.SaveAsync( executeMethod ).ConfigureAwait( false );
       }
 
       /// <summary>

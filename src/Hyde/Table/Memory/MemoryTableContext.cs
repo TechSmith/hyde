@@ -152,7 +152,7 @@ namespace TechSmith.Hyde.Table.Memory
          _pendingActions = new ConcurrentQueue<TableAction>();
 
          SaveInternal( executeMethod, pendingActions );
-         return Task.FromResult( 0 );
+         return Task.CompletedTask;
       }
 
       private void SaveInternal( Execute executeMethod, TableAction[] actions )
