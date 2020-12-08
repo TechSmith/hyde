@@ -4,7 +4,7 @@
     <Description>Object to Entity mapper for Windows Azure</Description>
     <Copyright>Copyright TechSmith Corporation 2017</Copyright>
     <AssemblyTitle>TechSmith.Hyde</AssemblyTitle>
-    <VersionPrefix>10.0.0</VersionPrefix>
+    <VersionPrefix>10.0.1</VersionPrefix>
     <Authors>TechSmith Corporation</Authors>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
@@ -12,6 +12,7 @@
     <PackageId>TechSmith.Hyde</PackageId>
     <PackageTags>TechSmith;Azure;Storage;Table Storage;Azure Table</PackageTags>
     <PackageReleaseNotes>
+       * (10.0.1) Fixed a deadlock issue in GetAsync methods and updated async code.
        * (10.0.0) Retargeted to .net standard 2.0 only. Convert to Microsoft.Azure.Cosmos.Table dependency instead of WindowsAzure.Storage (which was deprecated).
        * (9.1.1) Update storage dependencies to version 5.8.4.
        * (9.1.0) Retargeted .net standard 1.6 and .net 4.6. Lowest .net framework supported is now .net 4.6.0.
@@ -19,7 +20,7 @@
     </PackageReleaseNotes>
     <PackageProjectUrl>http://techsmith.github.com/hyde</PackageProjectUrl>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
-    <Version>10.0.0</Version>
+    <Version>10.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
